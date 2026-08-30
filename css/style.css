@@ -1,22 +1,21 @@
 :root {
-  --primary-color: #10b981;
-  --primary-dark: #059669;
-  --bg-color: #f8fafc;
+  --primary-color: #0d9488;
+  --bg-color: #f1f5f9;
   --card-bg: #ffffff;
+  --card-inner-bg: #f8fafc;
   --text-dark: #0f172a;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --danger-color: #ef4444;
   --nav-height: 65px;
-  --header-height: 60px;
+  --header-height: 70px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  -webkit-tap-highlight-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
@@ -27,172 +26,191 @@ body {
   direction: rtl;
 }
 
+/* Header */
 .header-bar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: var(--header-height);
-  background-color: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
+  padding: 0 20px;
   z-index: 1000;
 }
 
-.brand-title {
+.header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: bold;
+  gap: 15px;
+}
+
+.menu-btn, .bell-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-dark);
+  cursor: pointer;
+  position: relative;
+}
+
+.brand-title h2 {
   font-size: 1.1rem;
-  color: var(--primary-dark);
-}
-
-.connection-tag {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.connection-tag.online { background-color: #d1fae5; color: #065f46; }
-.connection-tag.offline { background-color: #fee2e2; color: #991b1b; }
-
-.page-tab {
-  display: none;
-  padding: 16px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.page-tab.active { display: block; }
-
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
-}
-
-.gauge-row-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.gauge-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.gauge-title {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.gauge-value {
-  font-size: 1.4rem;
-  font-weight: bold;
+  line-height: 1.1;
   color: var(--text-dark);
 }
 
-.optimal-range-text {
+.brand-title span {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-.gauge-chart-wrapper {
-  width: 70px;
-  height: 50px;
-}
-
-/* الضوء التنبيهي الأحمر */
-.gauge-status-indicator {
-  width: 16px;
-  height: 16px;
+.bell-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  background-color: var(--danger-color);
   border-radius: 50%;
-  background-color: var(--primary-color);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
-  transition: all 0.3s ease;
 }
 
-/* تأثير الإشعال والإطفاء عند تجاوز الحد */
-.gauge-status-indicator.danger {
-  animation: blinkRed 0.8s infinite alternate;
+/* Tabs */
+.page-tab {
+  display: none;
+  padding: 10px 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+.page-tab.active { display: block; }
+
+/* Dashboard Container Card */
+.live-status-container {
+  background: var(--card-bg);
+  border-radius: 24px;
+  padding: 20px 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
-.card.danger-border {
-  border-color: var(--danger-color);
+.live-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
-@keyframes blinkRed {
-  0% {
-    background-color: #ef4444;
-    box-shadow: 0 0 4px #ef4444, 0 0 12px #ef4444;
-  }
-  100% {
-    background-color: #7f1d1d;
-    box-shadow: 0 0 0px transparent;
-  }
+.live-status-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
 }
 
-.chart-controls-header {
+.status-badge {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* 2x3 Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Individual Sensor Card */
+.sensor-card {
+  background-color: #f3f7f9;
+  border-radius: 16px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.chart-select {
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  font-size: 0.9rem;
-  outline: none;
-}
-
-.time-filter-btns { display: flex; gap: 6px; }
-
-.btn-time {
-  flex: 1;
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  padding: 6px 0;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  position: relative;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
   cursor: pointer;
+}
+
+.sensor-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.sensor-name {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sensor-icon {
+  font-size: 1rem;
+  color: #0284c7;
+}
+
+.sensor-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.sensor-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.sensor-unit {
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-.btn-time.active {
-  background: var(--primary-color);
-  color: #fff;
-  border-color: var(--primary-color);
+/* حالة المستشعر النصية (عادي، عالي، ضعيف...) */
+.sensor-status-text {
+  font-size: 0.68rem;
+  margin-top: 2px;
+  font-weight: 600;
+  color: #059669;
 }
 
-.btn-primary {
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+.sensor-card.warning-low .sensor-status-text,
+.sensor-card.warning-high .sensor-status-text {
+  color: var(--danger-color);
 }
 
+/* الرسوم البيانية المصغرة */
+.mini-chart-container {
+  height: 35px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* تأثير الوميض عند تجاوز الحدود */
+.sensor-card.blink-alert {
+  animation: blinkBorder 0.8s infinite alternate;
+}
+
+@keyframes blinkBorder {
+  0% {
+    border-color: var(--danger-color);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    background-color: #fef2f2;
+  }
+  100% {
+    border-color: #fca5a5;
+    box-shadow: 0 0 2px rgba(239, 68, 68, 0.1);
+    background-color: #fff;
+  }
+}
+
+/* Bottom Navigation */
 .bottom-nav {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   height: var(--nav-height);
   background: var(--card-bg);
   border-top: 1px solid var(--border-color);
@@ -213,8 +231,18 @@ body {
   width: 25%;
 }
 
-.nav-item i { font-size: 1.2rem; }
-.nav-item.active { color: var(--primary-color); font-weight: bold; }
+.nav-item.active {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* Card & Modal Basics */
+.card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
 
 .modal {
   display: none;
@@ -226,14 +254,8 @@ body {
   align-items: center;
   padding: 16px;
 }
-
 .modal.active { display: flex; }
-.modal-content { width: 100%; max-width: 400px; }
-
-.input-field {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  margin-top: 4px;
-                   }
+.modal-content { width: 100%; max-width: 360px; }
+.input-field { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; }
+.btn-time { padding: 6px 12px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer; }
+.btn-primary { background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; }
