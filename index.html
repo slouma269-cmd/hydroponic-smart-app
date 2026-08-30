@@ -3,106 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مزرعتي الذكية - Hydroponics Dashboard</title>
+  <title>Hydroponic Smart System</title>
   
-  <!-- FontAwesome Icons & Chart.js & MQTT -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   
-  <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <!-- Header Bar -->
   <header class="header-bar">
-    <div class="brand-title">
-      <i class="fa-solid fa-leaf"></i>
-      <span>مزرعتي الذكية</span>
-    </div>
-    <div style="display:flex; align-items:center; gap: 10px;">
-      <button id="btn-notifications-permission" onclick="requestNotificationPermission()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">
-        <i class="fa-regular fa-bell"></i>
-      </button>
-      <div id="global-status-tag" class="connection-tag offline">
-        <i class="fa-solid fa-circle"></i> غير متصل
+    <div class="header-right">
+      <button class="menu-btn"><i class="fa-solid fa-bars"></i></button>
+      <div class="brand-title">
+        <h2>Hydroponic</h2>
+        <span>Smart System</span>
       </div>
+    </div>
+    <div class="header-left">
+      <button class="bell-btn" onclick="requestNotificationPermission()">
+        <i class="fa-regular fa-bell"></i>
+        <span class="bell-dot"></span>
+      </button>
     </div>
   </header>
 
-  <!-- TAB 1: الصفحة الرئيسية (الوضع البسيط مع المؤشر الأحمر) -->
+  <!-- TAB 1: الصفحة الرئيسية (مستوحاة من الصورة) -->
   <main id="tab-dashboard" class="page-tab active">
     
-    <!-- Status & Mode Banner -->
-    <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-      <div>
-        <span style="font-size:0.8rem; color:var(--text-muted);">وضع التشغيل الحالي:</span>
-        <h3 id="dash-mode-val" style="margin:0; color:var(--primary-color);">جاري التحميل...</h3>
+    <!-- Container Card for Live Status -->
+    <div class="live-status-container">
+      <div class="live-status-header">
+        <h3>Live Status</h3>
+        <div id="global-status-tag" class="status-badge online">
+          <i class="fa-solid fa-circle"></i> AUTO Mode
+        </div>
       </div>
-      <div style="display:flex; gap:6px;">
-        <button id="btn-mode-auto" class="btn-time" onclick="promptModeChange('AUTO')">تلقائي</button>
-        <button id="btn-mode-manual" class="btn-time" onclick="promptModeChange('MANUAL')">يدوي</button>
-      </div>
-    </div>
 
-    <!-- Quick Status Cards (مؤشرات سريعة مع الضوء الأحمر) -->
-    <div style="margin-top: 15px;">
-      <h4 style="margin:0 5px 12px 5px; color: var(--text-dark);">حالة القراءات الحالية</h4>
-
-      <div class="gauges-vertical-list">
-        <!-- Air Humidity -->
-        <div class="card gauge-row-card" id="card-airHum">
-          <div class="gauge-info">
-            <span class="gauge-title">رطوبة الهواء</span>
-            <div class="gauge-value" id="val-home-airHum">-- %</div>
+      <!-- Grid 2 Columns x 3 Rows -->
+      <div class="dashboard-grid">
+        
+        <!-- Air Temp Card -->
+        <div class="sensor-card" id="card-airTemp">
+          <div class="sensor-card-top">
+            <span class="sensor-name">Air Temp</span>
+            <i class="fa-solid fa-temperature-half sensor-icon"></i>
           </div>
-          <div class="gauge-status-indicator" id="indicator-airHum"></div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-airTemp">--</span>
+            <span class="sensor-unit">°C</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-airTemp">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-airTemp"></canvas>
+          </div>
         </div>
 
-        <!-- Water Temp -->
-        <div class="card gauge-row-card" id="card-waterTemp">
-          <div class="gauge-info">
-            <span class="gauge-title">حرارة الماء</span>
-            <div class="gauge-value" id="val-home-waterTemp">-- °C</div>
+        <!-- Humidity Card -->
+        <div class="sensor-card" id="card-airHum">
+          <div class="sensor-card-top">
+            <span class="sensor-name">Humidity</span>
+            <i class="fa-solid fa-droplet sensor-icon"></i>
           </div>
-          <div class="gauge-status-indicator" id="indicator-waterTemp"></div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-airHum">--</span>
+            <span class="sensor-unit">%</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-airHum">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-airHum"></canvas>
+          </div>
         </div>
 
-        <!-- Water Level -->
-        <div class="card gauge-row-card" id="card-waterLevel">
-          <div class="gauge-info">
-            <span class="gauge-title">مستوى الخزان</span>
-            <div class="gauge-value" id="val-home-waterLevel">-- %</div>
+        <!-- Water Temp Card -->
+        <div class="sensor-card" id="card-waterTemp">
+          <div class="sensor-card-top">
+            <span class="sensor-name">Water Temp</span>
+            <i class="fa-solid fa-flask sensor-icon"></i>
           </div>
-          <div class="gauge-status-indicator" id="indicator-waterLevel"></div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-waterTemp">--</span>
+            <span class="sensor-unit">°C</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-waterTemp">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-waterTemp"></canvas>
+          </div>
         </div>
 
-        <!-- pH Level -->
-        <div class="card gauge-row-card" id="card-ph">
-          <div class="gauge-info">
-            <span class="gauge-title">الحموضة (pH)</span>
-            <div class="gauge-value" id="val-home-ph">--</div>
+        <!-- Water Level Card -->
+        <div class="sensor-card" id="card-waterLevel">
+          <div class="sensor-card-top">
+            <span class="sensor-name">Water Level</span>
+            <i class="fa-solid fa-water sensor-icon"></i>
           </div>
-          <div class="gauge-status-indicator" id="indicator-ph"></div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-waterLevel">--</span>
+            <span class="sensor-unit">%</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-waterLevel">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-waterLevel"></canvas>
+          </div>
         </div>
 
-        <!-- EC Level -->
-        <div class="card gauge-row-card" id="card-ec">
-          <div class="gauge-info">
-            <span class="gauge-title">الملوحة (EC)</span>
-            <div class="gauge-value" id="val-home-ec">-- mS</div>
+        <!-- pH Level Card -->
+        <div class="sensor-card" id="card-ph">
+          <div class="sensor-card-top">
+            <span class="sensor-name">pH Level</span>
+            <i class="fa-solid fa-seedling sensor-icon"></i>
           </div>
-          <div class="gauge-status-indicator" id="indicator-ec"></div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-ph">--</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-ph">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-ph"></canvas>
+          </div>
         </div>
+
+        <!-- EC Level Card -->
+        <div class="sensor-card" id="card-ec">
+          <div class="sensor-card-top">
+            <span class="sensor-name">EC Level</span>
+            <i class="fa-solid fa-bolt sensor-icon"></i>
+          </div>
+          <div class="sensor-value-group">
+            <span class="sensor-value" id="val-home-ec">--</span>
+            <span class="sensor-unit">mS/cm</span>
+          </div>
+          <div class="sensor-status-text" id="status-txt-ec">جاري التحميل...</div>
+          <div class="mini-chart-container">
+            <canvas id="spark-ec"></canvas>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
 
-  <!-- TAB 2: صفحة المراقبة (تحديد المجالات + Gauges Grid + الرسوم البيانية) -->
+  <!-- TAB 2: صفحة المراقبة -->
   <main id="tab-monitoring" class="page-tab">
-    
-    <!-- Main Dynamic Chart Card -->
     <div class="card">
       <div class="chart-controls-header">
         <select id="sensor-select" class="chart-select" onchange="changeChartSensor(this.value)">
@@ -113,152 +156,49 @@
           <option value="ph">الحموضة (pH)</option>
           <option value="ec">الملوحة (EC)</option>
         </select>
-
-        <div class="time-filter-btns">
-          <button class="btn-time" onclick="filterChartTime('1h', this)">ساعة</button>
-          <button class="btn-time active" onclick="filterChartTime('24h', this)">24 ساعة</button>
-          <button class="btn-time" onclick="filterChartTime('7d', this)">7 أيام</button>
-        </div>
       </div>
-
       <div style="position: relative; height: 220px; width: 100%;">
         <canvas id="chart-main-monitoring"></canvas>
       </div>
     </div>
-
-    <!-- Gauges Grid & Optimal Ranges (المجالات المحددة) -->
-    <div style="margin-top: 20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 5px 12px 5px;">
-        <h4 style="margin:0; color: var(--text-dark);">تحديد المجالات والقراءات التفصيلية</h4>
-        <span style="font-size:0.75rem; color:#64748b;">اضغط على البطاقة لتعديل الحدود</span>
-      </div>
-
-      <div class="gauges-vertical-list">
-        <!-- pH Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('ph')">
-          <div class="gauge-info">
-            <span class="gauge-title">الحموضة (pH Level)</span>
-            <div class="gauge-value" id="val-gauge-ph">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ph">5.5 - 6.5</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-ph"></canvas>
-          </div>
-        </div>
-
-        <!-- EC Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('ec')">
-          <div class="gauge-info">
-            <span class="gauge-title">الملوحة (EC mS/cm)</span>
-            <div class="gauge-value" id="val-gauge-ec">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ec">1.2 - 2.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-ec"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Temp Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('waterTemp')">
-          <div class="gauge-info">
-            <span class="gauge-title">حرارة الماء (Water Temp °C)</span>
-            <div class="gauge-value" id="val-gauge-waterTemp">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterTemp">18.0 - 24.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-waterTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Air Temp Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('airTemp')">
-          <div class="gauge-info">
-            <span class="gauge-title">حرارة الهواء (Air Temp °C)</span>
-            <div class="gauge-value" id="val-gauge-airTemp">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airTemp">15.0 - 32.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-airTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Air Hum Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('airHum')">
-          <div class="gauge-info">
-            <span class="gauge-title">رطوبة الهواء (Humidity %)</span>
-            <div class="gauge-value" id="val-gauge-airHum">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airHum">50 - 80</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-airHum"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Level Range Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('waterLevel')">
-          <div class="gauge-info">
-            <span class="gauge-title">مستوى الخزان (Water Level %)</span>
-            <div class="gauge-value" id="val-gauge-waterLevel">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterLevel">40 - 80</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-waterLevel"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 
-  <!-- TAB 3: صفحة التحكم (Controls) -->
+  <!-- TAB 3: التحكم -->
   <main id="tab-controls" class="page-tab">
-    <div id="controls-lock-banner" class="card" style="background:#fffbebe6; border-color:#fde68a; display:none; align-items:center; gap:10px;">
-      <i class="fa-solid fa-lock" style="color:#d97706;"></i>
-      <span style="font-size:0.85rem; color:#b45309;">النظام في الوضع التلقائي. قم بالتحويل للوضع اليدوي للتحكم بالمفاتيح.</span>
-    </div>
-
     <div class="card">
-      <h4 style="margin-bottom:12px;">المفاتيح والمشغلات</h4>
-      <p style="font-size:0.85rem; color:var(--text-muted);">تحكم مباشر بالمضخات والإضاءة والمراوح.</p>
+      <h4>المفاتيح والمشغلات</h4>
     </div>
   </main>
 
-  <!-- TAB 4: صفحة القائمة (Menu) -->
+  <!-- TAB 4: القائمة -->
   <main id="tab-menu" class="page-tab">
     <div class="card">
-      <h4>سجل التنبيهات والإشعارات</h4>
-      <div id="alerts-log-container" style="margin-top:10px;">
-        <p style="font-size:0.85rem; color:var(--text-muted);">لا توجد تنبيهات جديدة.</p>
-      </div>
+      <h4>السجلات والإعدادات</h4>
     </div>
   </main>
 
-  <!-- MODAL: Range Edit -->
+  <!-- Modal: تعديل الحدود -->
   <div id="range-edit-modal" class="modal">
     <div class="modal-content card">
-      <h3 id="modal-sensor-name" style="margin-top:0; color:var(--text-dark);">تعديل الحدود المثالية</h3>
-      <p style="font-size:0.85rem; color:#64748b; margin-bottom:15px;">
-        حدد الحد الأدنى والأقصى لتحديث التنبيهات فوراً.
-      </p>
-
-      <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <h3 id="modal-sensor-name" style="margin-top:0;">تعديل الحدود المثالية</h3>
+      <div style="display:flex; gap:10px; margin: 15px 0;">
         <div style="flex:1;">
-          <label style="font-size:0.8rem; font-weight:bold;">الحد الأدنى (Min):</label>
+          <label style="font-size:0.8rem;">الحد الأدنى:</label>
           <input type="number" id="input-range-min" class="input-field" step="0.1">
         </div>
         <div style="flex:1;">
-          <label style="font-size:0.8rem; font-weight:bold;">الحد الأقصى (Max):</label>
+          <label style="font-size:0.8rem;">الحد الأقصى:</label>
           <input type="number" id="input-range-max" class="input-field" step="0.1">
         </div>
       </div>
-
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn-time" onclick="closeRangeModal()">إلغاء</button>
-        <button class="btn-primary" style="padding: 6px 16px;" onclick="confirmSaveRange()">حفظ (Save)</button>
+        <button class="btn-primary" style="padding:6px 16px;" onclick="confirmSaveRange()">حفظ</button>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Navigation Bar -->
+  <!-- Bottom Navigation -->
   <nav class="bottom-nav">
     <div class="nav-item active" onclick="switchTab('tab-dashboard', this)">
       <i class="fa-solid fa-house"></i>
@@ -280,5 +220,4 @@
 
   <script src="js/app.js"></script>
 </body>
-    </html>
-  
+</html>
