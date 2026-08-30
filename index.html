@@ -114,22 +114,30 @@
     <p>Real-time system overview</p>
   </div>
 
-  <!-- Big Line Chart Card -->
+  <!-- Interactive Dynamic Main Chart Card -->
   <div class="card chart-card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <h4 style="margin:0;">حرارة الماء (Water Temp °C)</h4>
-      <span style="font-size:0.8rem; background:#f1f5f9; padding:4px 8px; border-radius:6px; color:#64748b;">آخر 24 ساعة</span>
-    </div>
-    <div style="height: 220px; position: relative;">
-      <canvas id="chart-main-water"></canvas>
-    </div>
-  </div>
+    <!-- Controls Header: Sensor Selector & Time Range Filter -->
+    <div class="chart-controls-header">
+      <select id="chart-sensor-select" class="chart-select" onchange="changeChartSensor(this.value)">
+        <option value="waterTemp">حرارة الماء (°C)</option>
+        <option value="airTemp">حرارة الهواء (°C)</option>
+        <option value="airHum">رطوبة الهواء (%)</option>
+        <option value="waterLevel">مستوى الخزان (%)</option>
+        <option value="ph">الحموضة (pH)</option>
+        <option value="ec">الملوحة (EC)</option>
+      </select>
 
-  <!-- Devices Status Doughnut Chart -->
-  <div class="card" style="margin-top: 16px;">
-    <h4>حالة الأجهزة (Devices Status)</h4>
-    <div style="height: 180px; position: relative; margin-top: 10px;">
-      <canvas id="chart-devices-status"></canvas>
+      <div class="time-filter-btns">
+        <button class="btn-time" onclick="filterChartTime('1h', this)">1h</button>
+        <button class="btn-time active" onclick="filterChartTime('24h', this)">24h</button>
+        <button class="btn-time" onclick="filterChartTime('7d', this)">7d</button>
+        <button class="btn-time" onclick="filterChartTime('30d', this)">30d</button>
+      </div>
+    </div>
+
+    <!-- Chart Canvas Container -->
+    <div style="height: 230px; position: relative; margin-top: 10px;">
+      <canvas id="chart-main-monitoring"></canvas>
     </div>
   </div>
 
@@ -177,6 +185,7 @@
     </div>
   </div>
 </section>
+
 
 
     <!-- PAGE 3: Manual Controls Tab (With Auto-Lock Banner) -->
