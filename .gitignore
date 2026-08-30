@@ -1,0 +1,11 @@
+# OS Metadata
+.DS_Store
+Thumbs.db
+
+# Editor Files
+.vscode/
+.idea/
+
+# Node Modules (In case of npm use later)
+node_modules/
+
