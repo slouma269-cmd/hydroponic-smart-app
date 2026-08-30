@@ -3,7 +3,7 @@ const MQTT_CONFIG = {
   // استخدام بروتوكول WSS للاتصال الآمن عبر المتصفح بالـ Cloud Cluster
   host: 'wss://99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud:8884/mqtt',
   options: {
-    username: 'hydro01',
+    username: 'hydro01-test',
     password: 'Atef269269',
     clientId: 'Hydroponic_Web_' + Math.floor(Math.random() * 100000),
     keepalive: 60,
