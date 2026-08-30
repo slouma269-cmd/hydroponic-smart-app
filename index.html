@@ -141,49 +141,128 @@
     </div>
   </div>
 
-  <!-- Quick View Gauges Grid -->
-  <div style="margin-top: 20px;">
-    <h4 style="margin-bottom: 12px; color: var(--text-dark);">Quick View</h4>
-    <div class="cards-grid">
-      
-      <!-- pH Gauge Card -->
-      <div class="card gauge-card">
-        <span class="card-label">pH Level</span>
-        <div style="height: 110px; position: relative; margin-top: 5px;">
-          <canvas id="gauge-ph"></canvas>
-        </div>
-        <div class="ideal-range-tag">Ideal 5.8 - 6.5</div>
-      </div>
+  <!-- Gauges Vertical Grid -->
+<div style="margin-top: 20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+    <h4 style="margin:0; color: var(--text-dark);">Quick View & Optimal Ranges</h4>
+    <span style="font-size:0.75rem; color:#64748b;">اضغط على أي بطاقة لتعديل حدود التنبيه</span>
+  </div>
 
-      <!-- EC Gauge Card -->
-      <div class="card gauge-card">
-        <span class="card-label">EC (mS/cm)</span>
-        <div style="height: 110px; position: relative; margin-top: 5px;">
-          <canvas id="gauge-ec"></canvas>
+  <div class="gauges-vertical-list">
+    
+    <!-- pH Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('ph')">
+      <div class="gauge-info">
+        <span class="gauge-title">الحموضة (pH Level)</span>
+        <div class="gauge-value" id="val-gauge-ph">6.2</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-ph">5.5 - 6.5</strong>
         </div>
-        <div class="ideal-range-tag">Ideal 1.2 - 2.0</div>
       </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-ph"></canvas>
+      </div>
+    </div>
 
-      <!-- Water Temp Gauge Card -->
-      <div class="card gauge-card">
-        <span class="card-label">Water Temp (°C)</span>
-        <div style="height: 110px; position: relative; margin-top: 5px;">
-          <canvas id="gauge-water-temp"></canvas>
+    <!-- EC Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('ec')">
+      <div class="gauge-info">
+        <span class="gauge-title">الملوحة (EC mS/cm)</span>
+        <div class="gauge-value" id="val-gauge-ec">1.58</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-ec">1.2 - 2.0</strong>
         </div>
-        <div class="ideal-range-tag">Ideal 18 - 24</div>
       </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-ec"></canvas>
+      </div>
+    </div>
 
-      <!-- Water Level Gauge Card -->
-      <div class="card gauge-card">
-        <span class="card-label">Water Level (%)</span>
-        <div style="height: 110px; position: relative; margin-top: 5px;">
-          <canvas id="gauge-water-level"></canvas>
+    <!-- Water Temp Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('waterTemp')">
+      <div class="gauge-info">
+        <span class="gauge-title">حرارة الماء (Water Temp °C)</span>
+        <div class="gauge-value" id="val-gauge-waterTemp">23.4</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-waterTemp">18.0 - 24.0</strong>
         </div>
-        <div class="ideal-range-tag">Ideal 40 - 80</div>
       </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-waterTemp"></canvas>
+      </div>
+    </div>
 
+    <!-- Air Temp Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('airTemp')">
+      <div class="gauge-info">
+        <span class="gauge-title">حرارة الهواء (Air Temp °C)</span>
+        <div class="gauge-value" id="val-gauge-airTemp">27.8</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-airTemp">15.0 - 32.0</strong>
+        </div>
+      </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-airTemp"></canvas>
+      </div>
+    </div>
+
+    <!-- Air Humidity Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('airHum')">
+      <div class="gauge-info">
+        <span class="gauge-title">رطوبة الهواء (Humidity %)</span>
+        <div class="gauge-value" id="val-gauge-airHum">68</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-airHum">50 - 80</strong>
+        </div>
+      </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-airHum"></canvas>
+      </div>
+    </div>
+
+    <!-- Water Level Card -->
+    <div class="card gauge-row-card" onclick="openRangeModal('waterLevel')">
+      <div class="gauge-info">
+        <span class="gauge-title">مستوى الخزان (Water Level %)</span>
+        <div class="gauge-value" id="val-gauge-waterLevel">75</div>
+        <div class="optimal-range-text">
+          النطاق المثالي: <strong id="range-txt-waterLevel">40 - 80</strong>
+        </div>
+      </div>
+      <div class="gauge-chart-wrapper">
+        <canvas id="gauge-waterLevel"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Dialog for Range Editing -->
+<div id="range-edit-modal" class="modal">
+  <div class="modal-content card">
+    <h3 id="modal-sensor-name" style="margin-top:0; color:var(--text-dark);">تعديل الحدود المثالية</h3>
+    <p style="font-size:0.85rem; color:#64748b; margin-bottom:15px;">
+      قم بتحديد الحد الأدنى والأقصى. وسيتم استخدام هذه القيم فوراً في فحص القراءات وإطلاق الإشعارات والتنبيهات.
+    </p>
+
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+      <div style="flex:1;">
+        <label style="font-size:0.8rem; font-weight:bold;">الحد الأدنى (Min):</label>
+        <input type="number" id="input-range-min" class="input-field" step="0.1">
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:0.8rem; font-weight:bold;">الحد الأقصى (Max):</label>
+        <input type="number" id="input-range-max" class="input-field" step="0.1">
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px;">
+      <button class="btn-time" onclick="closeRangeModal()">إلغاء</button>
+      <button class="btn-primary" style="padding: 6px 16px;" onclick="confirmSaveRange()">حفظ التعديلات (Save)</button>
     </div>
   </div>
+</div>
+
 </section>
 
 
