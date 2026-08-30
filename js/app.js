@@ -1,4 +1,6 @@
-// HiveMQ Cloud Credentials & Topics Configuration
+// ==========================================
+// 1. HiveMQ Cloud Credentials & Config
+// ==========================================
 const MQTT_CONFIG = {
   host: 'wss://99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud:8884/mqtt',
   options: {
@@ -19,7 +21,9 @@ const MQTT_CONFIG = {
 let mqttClient = null;
 let pendingModeChange = null;
 
-// System Alarm Thresholds & Ideal Ranges
+// ==========================================
+// 2. Alarm Limits & Local Logs
+// ==========================================
 const ALARM_LIMITS = {
   maxAirTemp: 32.0,  
   minAirTemp: 15.0,  
@@ -28,17 +32,27 @@ const ALARM_LIMITS = {
   maxPh: 6.8         
 };
 
-// Log storage for alarms
 let alertLogs = JSON.parse(localStorage.getItem('hydro_alert_logs')) || [];
 
-// App Startup
+// Storage for Chart.js Instances
+let charts = {
+  mainWater: null,
+  devicesStatus: null,
+  gauges: {}
+};
+
+// ==========================================
+// 3. Application Lifecycle
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
   initMQTT();
   initCharts();
   checkNotificationStatus();
 });
 
-// Request Browser Notification Permission
+// ==========================================
+// 4. Browser Notifications
+// ==========================================
 function requestNotificationPermission() {
   if (!("Notification" in window)) {
     alert("هذا المتصفح لا يدعم إشعارات النظام.");
@@ -72,7 +86,6 @@ function updateNotificationBellIcon(permission) {
   }
 }
 
-// Push Browser Notification
 function sendPushNotification(title, message) {
   if ("Notification" in window && Notification.permission === "granted") {
     new Notification(title, {
@@ -83,7 +96,9 @@ function sendPushNotification(title, message) {
   }
 }
 
-// Navigation Controller
+// ==========================================
+// 5. Tabs & Modals Navigation
+// ==========================================
 function switchTab(tabId, btnElement) {
   document.querySelectorAll('.page-tab').forEach(tab => tab.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
@@ -92,11 +107,9 @@ function switchTab(tabId, btnElement) {
   btnElement.classList.add('active');
 }
 
-// Menu Sub-Page Modal Controller & Clear Logs Logic
 function openSubPage(subType) {
   const modal = document.getElementById('sub-page-modal');
   const title = document.getElementById('modal-title');
-  const content = document.getElementById('modal-content');
 
   modal.classList.add('open');
 
@@ -105,7 +118,7 @@ function openSubPage(subType) {
     renderAlertLogsUI();
   } else if (subType === 'sub-nutrients') {
     title.innerText = "إدارة المغذيات";
-    content.innerHTML = `
+    document.getElementById('modal-content').innerHTML = `
       <div class="card">
         <h4>تحديد الأهداف (Target Limits)</h4>
         <label style="display:block; margin-top:10px;">Target pH: <input type="number" step="0.1" value="6.0" class="input-field"></label>
@@ -114,7 +127,7 @@ function openSubPage(subType) {
       </div>`;
   } else if (subType === 'sub-mqtt') {
     title.innerText = "إعدادات HiveMQ Cloud";
-    content.innerHTML = `
+    document.getElementById('modal-content').innerHTML = `
       <div class="card">
         <label style="display:block; margin-bottom:5px;">حالة الاتصال بالكلود:</label>
         <button class="btn-primary" style="background:#0284c7; margin-bottom:15px; width:100%;" onclick="reconnectMQTT()">إعادة الاتصال 🔄</button>
@@ -124,6 +137,10 @@ function openSubPage(subType) {
         <input type="text" value="hydro01-test" class="input-field" readonly>
       </div>`;
   }
+}
+
+function closeSubPage() {
+  document.getElementById('sub-page-modal').classList.remove('open');
 }
 
 function renderAlertLogsUI() {
@@ -169,11 +186,7 @@ function clearAlertLogs() {
   renderAlertLogsUI();
 }
 
-function closeSubPage() {
-  document.getElementById('sub-page-modal').classList.remove('open');
-}
-
-// Mode Confirmation Modal Functions
+// Mode Confirmation Dialogs
 function promptModeChange(newMode) {
   pendingModeChange = newMode;
   const modal = document.getElementById('mode-confirm-modal');
@@ -203,7 +216,9 @@ function executeModeChange() {
   closeModeModal();
 }
 
-// MQTT Connection Engine
+// ==========================================
+// 6. MQTT Client Logic
+// ==========================================
 function initMQTT() {
   const statusTag = document.getElementById('global-status-tag');
   
@@ -220,7 +235,7 @@ function initMQTT() {
     mqttClient = mqtt.connect(MQTT_CONFIG.host, MQTT_CONFIG.options);
 
     mqttClient.on('connect', () => {
-      console.log('Successfully connected to HiveMQ Cloud Cluster!');
+      console.log('Connected to HiveMQ Cloud successfully!');
       if (statusTag) {
         statusTag.className = 'connection-tag online';
         statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل';
@@ -237,7 +252,7 @@ function initMQTT() {
           evaluateAlarms(data);
         }
       } catch (e) {
-        console.error("JSON Error:", e);
+        console.error("Payload JSON parsing error:", e);
       }
     });
 
@@ -256,7 +271,7 @@ function initMQTT() {
     });
 
   } catch (e) {
-    console.error('MQTT Exception:', e);
+    console.error('MQTT connection error:', e);
   }
 }
 
@@ -265,7 +280,7 @@ function reconnectMQTT() {
   closeSubPage();
 }
 
-// Evaluate Sensor Limits and Trigger Alarms
+// Evaluate limits and push alarms
 function evaluateAlarms(data) {
   const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
 
@@ -293,7 +308,9 @@ function triggerAlarm(title, message, time) {
   }
 }
 
-// Dynamic UI Updater with Conditional Formatting & Lock Auto Mode
+// ==========================================
+// 7. Dynamic Telemetry & UI Updates
+// ==========================================
 function updateSensorUI(data) {
   const setHtml = (id, val) => {
     const el = document.getElementById(id);
@@ -305,40 +322,45 @@ function updateSensorUI(data) {
     if (el) el.innerText = val;
   };
 
-  const setProgress = (selector, val) => {
-    const el = document.querySelector(selector);
-    if (el) el.value = parseFloat(val) || 0;
-  };
-
-  // 1. Temperature Formatting
+  // 1. Dashboard Values & Conditional Formatting
   if (data.air_temp !== undefined) {
     setHtml('dash-air-temp', `${data.air_temp} <small>°C</small>`);
     applyCardStatus('card-air-temp', data.air_temp, ALARM_LIMITS.minAirTemp, ALARM_LIMITS.maxAirTemp);
   }
 
   if (data.air_hum !== undefined) setHtml('dash-air-hum', `${data.air_hum} <small>%</small>`);
-  if (data.water_temp !== undefined) setHtml('dash-water-temp', `${data.water_temp} <small>°C</small>`);
   
-  // 2. Water Tank Level Formatting
+  if (data.water_temp !== undefined) {
+    setHtml('dash-water-temp', `${data.water_temp} <small>°C</small>`);
+    if (charts.gauges.waterTemp) {
+      updateGaugeChart(charts.gauges.waterTemp, data.water_temp, 10, 30);
+    }
+  }
+  
   if (data.tank_level !== undefined) {
     setHtml('dash-water-level', `${data.tank_level} <small>%</small>`);
     applyCardStatus('card-water-level', data.tank_level, ALARM_LIMITS.minWaterLevel, 100);
+    if (charts.gauges.waterLevel) {
+      updateGaugeChart(charts.gauges.waterLevel, data.tank_level, 0, 100);
+    }
   }
 
-  // 3. pH Formatting
   if (data.ph !== undefined) {
     setText('dash-ph', data.ph);
-    setText('gauge-ph-val', data.ph);
-    setProgress('#tab-monitoring progress[max="14"]', data.ph);
     applyCardStatus('card-ph', data.ph, ALARM_LIMITS.minPh, ALARM_LIMITS.maxPh);
+    if (charts.gauges.ph) {
+      updateGaugeChart(charts.gauges.ph, data.ph, 0, 14);
+    }
   }
   
   if (data.ec !== undefined) {
     setHtml('dash-ec', `${data.ec} <small>mS</small>`);
-    setText('gauge-ec-val', `${data.ec} mS/cm`);
-    setProgress('#tab-monitoring progress[max="5"]', data.ec);
+    if (charts.gauges.ec) {
+      updateGaugeChart(charts.gauges.ec, data.ec, 0, 3);
+    }
   }
 
+  // 2. Mode & Device Controls State
   if (data.mode !== undefined) {
     updateModeUI(String(data.mode).toUpperCase());
   }
@@ -359,12 +381,11 @@ function updateSensorUI(data) {
   }
 }
 
-// Conditional Formatting Function
 function applyCardStatus(cardId, value, minLimit, maxLimit) {
   const card = document.getElementById(cardId);
   if (!card) return;
 
-  card.classList.remove('status-normal', 'status-danger', 'status-warning');
+  card.classList.remove('status-normal', 'status-danger');
 
   if (value < minLimit || value > maxLimit) {
     card.classList.add('status-danger');
@@ -373,7 +394,6 @@ function applyCardStatus(cardId, value, minLimit, maxLimit) {
   }
 }
 
-// Update Mode & Lock Controls
 function updateModeUI(mode) {
   const modeValEl = document.getElementById('dash-mode-val');
   const btnAuto = document.getElementById('btn-mode-auto');
@@ -406,7 +426,6 @@ function updateModeUI(mode) {
     }
   }
 
-  // Auto Mode Control Locking
   if (lockBanner) {
     lockBanner.style.display = isAuto ? 'flex' : 'none';
   }
@@ -439,23 +458,117 @@ function toggleDevice(deviceId, state) {
   }
 }
 
+// ==========================================
+// 8. Charts Initialization Engine
+// ==========================================
 function initCharts() {
-  const canvas = document.getElementById('chart-temp');
+  initMainWaterChart();
+  initDevicesDoughnutChart();
+  initGaugeCharts();
+}
+
+function initMainWaterChart() {
+  const canvas = document.getElementById('chart-main-water');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  new Chart(ctx, {
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
+  gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+  charts.mainWater = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ['01:00', '02:00', '03:00', '04:00', '05:00'],
+      labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
       datasets: [{
-        label: 'الحرارة C°',
-        data: [26, 27.5, 28.5, 28, 29],
-        borderColor: '#ea580c',
-        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+        label: 'Water Temp °C',
+        data: [22.1, 22.8, 22.2, 23.4, 22.9, 24.2, 22.6],
+        borderColor: '#0284c7',
+        borderWidth: 2.5,
+        backgroundColor: gradient,
         fill: true,
-        tension: 0.4
+        tension: 0.4,
+        pointRadius: 2,
+        pointHoverRadius: 6
       }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 20, max: 26, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
     }
   });
-                            }
-      
+}
+
+function initDevicesDoughnutChart() {
+  const canvas = document.getElementById('chart-devices-status');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  charts.devicesStatus = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Running', 'Idle', 'Off', 'Alert'],
+      datasets: [{
+        data: [5, 1, 2, 1],
+        backgroundColor: ['#22c55e', '#38bdf8', '#94a3b8', '#ef4444'],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '75%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function createSemiGauge(elementId, value, min, max, color) {
+  const canvas = document.getElementById(elementId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [value - min, max - value],
+        backgroundColor: [color, '#e2e8f0'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      rotation: -90,
+      circumference: 180,
+      cutout: '80%',
+      plugins: {
+        tooltip: { enabled: false },
+        legend: { display: false }
+      }
+    }
+  });
+}
+
+function initGaugeCharts() {
+  charts.gauges.ph = createSemiGauge('gauge-ph', 6.2, 0, 14, '#22c55e');
+  charts.gauges.ec = createSemiGauge('gauge-ec', 1.58, 0, 3, '#0284c7');
+  charts.gauges.waterTemp = createSemiGauge('gauge-water-temp', 23.4, 10, 30, '#06b6d4');
+  charts.gauges.waterLevel = createSemiGauge('gauge-water-level', 75, 0, 100, '#3b82f6');
+}
+
+function updateGaugeChart(gaugeInstance, val, min, max) {
+  if (!gaugeInstance) return;
+  const currentVal = Math.max(min, Math.min(val, max));
+  gaugeInstance.data.datasets[0].data = [currentVal - min, max - currentVal];
+  gaugeInstance.update();
+          }
+        
