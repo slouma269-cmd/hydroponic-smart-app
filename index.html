@@ -31,8 +31,8 @@
     </div>
   </header>
 
-  <!-- TAB 1: Monitoring Dashboard (الصفحة الرئيسية / المراقبة) -->
-  <main id="tab-monitoring" class="page-tab active">
+  <!-- TAB 1: الصفحة الرئيسية (Dashboard) -->
+  <main id="tab-dashboard" class="page-tab active">
     
     <!-- Status & Mode Banner -->
     <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
@@ -46,9 +46,84 @@
       </div>
     </div>
 
-    <!-- Main Dynamic Chart Card -->
+    <!-- Quick View Cards (مع مؤشر الوميض الأحمر عند التجاوز) -->
+    <div style="margin-top: 15px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 5px 12px 5px;">
+        <h4 style="margin:0; color: var(--text-dark);">حالة المستشعرات والنطاقات</h4>
+        <span style="font-size:0.75rem; color:#64748b;">اضغط على البطاقة لتعديل الحدود</span>
+      </div>
+
+      <div class="gauges-vertical-list">
+        
+        <!-- pH Card -->
+        <div class="card gauge-row-card" id="card-ph" onclick="openRangeModal('ph')">
+          <div class="gauge-info">
+            <span class="gauge-title">الحموضة (pH Level)</span>
+            <div class="gauge-value" id="val-gauge-ph">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ph">5.5 - 6.5</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-ph"></div>
+        </div>
+
+        <!-- EC Card -->
+        <div class="card gauge-row-card" id="card-ec" onclick="openRangeModal('ec')">
+          <div class="gauge-info">
+            <span class="gauge-title">الملوحة (EC mS/cm)</span>
+            <div class="gauge-value" id="val-gauge-ec">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ec">1.2 - 2.0</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-ec"></div>
+        </div>
+
+        <!-- Water Temp Card -->
+        <div class="card gauge-row-card" id="card-waterTemp" onclick="openRangeModal('waterTemp')">
+          <div class="gauge-info">
+            <span class="gauge-title">حرارة الماء (Water Temp °C)</span>
+            <div class="gauge-value" id="val-gauge-waterTemp">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterTemp">18.0 - 24.0</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-waterTemp"></div>
+        </div>
+
+        <!-- Air Temp Card -->
+        <div class="card gauge-row-card" id="card-airTemp" onclick="openRangeModal('airTemp')">
+          <div class="gauge-info">
+            <span class="gauge-title">حرارة الهواء (Air Temp °C)</span>
+            <div class="gauge-value" id="val-gauge-airTemp">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airTemp">15.0 - 32.0</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-airTemp"></div>
+        </div>
+
+        <!-- Air Hum Card -->
+        <div class="card gauge-row-card" id="card-airHum" onclick="openRangeModal('airHum')">
+          <div class="gauge-info">
+            <span class="gauge-title">رطوبة الهواء (Humidity %)</span>
+            <div class="gauge-value" id="val-gauge-airHum">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airHum">50 - 80</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-airHum"></div>
+        </div>
+
+        <!-- Water Level Card -->
+        <div class="card gauge-row-card" id="card-waterLevel" onclick="openRangeModal('waterLevel')">
+          <div class="gauge-info">
+            <span class="gauge-title">مستوى الخزان (Water Level %)</span>
+            <div class="gauge-value" id="val-gauge-waterLevel">--</div>
+            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterLevel">40 - 80</strong></div>
+          </div>
+          <div class="gauge-status-indicator" id="indicator-waterLevel"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- TAB 2: صفحة المراقبة (Monitoring - الرسوم البيانية) -->
+  <main id="tab-monitoring" class="page-tab">
     <div class="card">
-      <div class="chart-controls-header">
+      <h3>الرسوم البيانية والتحليل الزمني</h3>
+      <div class="chart-controls-header" style="margin-top: 15px;">
         <select id="sensor-select" class="chart-select" onchange="changeChartSensor(this.value)">
           <option value="waterTemp">حرارة الماء (°C)</option>
           <option value="airTemp">حرارة الهواء (°C)</option>
@@ -62,101 +137,16 @@
           <button class="btn-time" onclick="filterChartTime('1h', this)">ساعة</button>
           <button class="btn-time active" onclick="filterChartTime('24h', this)">24 ساعة</button>
           <button class="btn-time" onclick="filterChartTime('7d', this)">7 أيام</button>
-          <button class="btn-time" onclick="filterChartTime('30d', this)">شهر</button>
         </div>
       </div>
 
-      <div style="position: relative; height: 220px; width: 100%;">
+      <div style="position: relative; height: 300px; width: 100%; margin-top: 15px;">
         <canvas id="chart-main-monitoring"></canvas>
-      </div>
-    </div>
-
-    <!-- Gauges Grid & Optimal Ranges Vertical List -->
-    <div style="margin-top: 20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin: 0 16px 12px 16px;">
-        <h4 style="margin:0; color: var(--text-dark);">Quick View & Optimal Ranges</h4>
-        <span style="font-size:0.75rem; color:#64748b;">اضغط على البطاقة للتعديل</span>
-      </div>
-
-      <div class="gauges-vertical-list">
-        
-        <!-- pH Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('ph')">
-          <div class="gauge-info">
-            <span class="gauge-title">الحموضة (pH Level)</span>
-            <div class="gauge-value" id="val-gauge-ph">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ph">5.5 - 6.5</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-ph"></canvas>
-          </div>
-        </div>
-
-        <!-- EC Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('ec')">
-          <div class="gauge-info">
-            <span class="gauge-title">الملوحة (EC mS/cm)</span>
-            <div class="gauge-value" id="val-gauge-ec">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-ec">1.2 - 2.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-ec"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Temp Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('waterTemp')">
-          <div class="gauge-info">
-            <span class="gauge-title">حرارة الماء (Water Temp °C)</span>
-            <div class="gauge-value" id="val-gauge-waterTemp">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterTemp">18.0 - 24.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-waterTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Air Temp Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('airTemp')">
-          <div class="gauge-info">
-            <span class="gauge-title">حرارة الهواء (Air Temp °C)</span>
-            <div class="gauge-value" id="val-gauge-airTemp">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airTemp">15.0 - 32.0</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-airTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Air Hum Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('airHum')">
-          <div class="gauge-info">
-            <span class="gauge-title">رطوبة الهواء (Humidity %)</span>
-            <div class="gauge-value" id="val-gauge-airHum">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-airHum">50 - 80</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-airHum"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Level Card -->
-        <div class="card gauge-row-card" onclick="openRangeModal('waterLevel')">
-          <div class="gauge-info">
-            <span class="gauge-title">مستوى الخزان (Water Level %)</span>
-            <div class="gauge-value" id="val-gauge-waterLevel">--</div>
-            <div class="optimal-range-text">النطاق المثالي: <strong id="range-txt-waterLevel">40 - 80</strong></div>
-          </div>
-          <div class="gauge-chart-wrapper">
-            <canvas id="gauge-waterLevel"></canvas>
-          </div>
-        </div>
-
       </div>
     </div>
   </main>
 
-  <!-- TAB 2: Controls (التحكم) -->
+  <!-- TAB 3: صفحة التحكم (Controls) -->
   <main id="tab-controls" class="page-tab">
     <div id="controls-lock-banner" class="card" style="background:#fffbebe6; border-color:#fde68a; display:none; align-items:center; gap:10px;">
       <i class="fa-solid fa-lock" style="color:#d97706;"></i>
@@ -169,7 +159,7 @@
     </div>
   </main>
 
-  <!-- TAB 3: Menu / Logs (القائمة والتنبيهات) -->
+  <!-- TAB 4: صفحة القائمة (Menu) -->
   <main id="tab-menu" class="page-tab">
     <div class="card">
       <h4>سجل التنبيهات والإشعارات</h4>
@@ -179,7 +169,7 @@
     </div>
   </main>
 
-  <!-- MODAL 1: Edit Range Modal -->
+  <!-- MODAL: Edit Range Modal -->
   <div id="range-edit-modal" class="modal">
     <div class="modal-content card">
       <h3 id="modal-sensor-name" style="margin-top:0; color:var(--text-dark);">تعديل الحدود المثالية</h3>
@@ -205,35 +195,26 @@
     </div>
   </div>
 
-  <!-- MODAL 2: Mode Confirm Modal -->
-  <div id="mode-confirm-modal" class="modal">
-    <div class="modal-content card">
-      <h3 style="margin-top:0; color:var(--text-dark);">تأكيد تغيير الوضع</h3>
-      <p id="mode-confirm-text" style="font-size:0.85rem; color:#64748b; margin-bottom:15px;"></p>
-      <div style="display:flex; justify-content:flex-end; gap:8px;">
-        <button class="btn-time" onclick="closeModeModal()">إلغاء</button>
-        <button id="btn-confirm-action" class="btn-primary" style="padding: 6px 16px;">تأكيد</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Navigation Bar -->
+  <!-- Bottom Navigation Bar (4 أزرار) -->
   <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('tab-monitoring', this)">
-      <i class="fa-solid fa-chart-pie"></i>
+    <div class="nav-item active" onclick="switchTab('tab-dashboard', this)">
+      <i class="fa-solid fa-house"></i>
       <span>الرئيسية</span>
+    </div>
+    <div class="nav-item" onclick="switchTab('tab-monitoring', this)">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>المراقبة</span>
     </div>
     <div class="nav-item" onclick="switchTab('tab-controls', this)">
       <i class="fa-solid fa-sliders"></i>
       <span>التحكم</span>
     </div>
     <div class="nav-item" onclick="switchTab('tab-menu', this)">
-      <i class="fa-solid fa-ellipsis-h"></i>
+      <i class="fa-solid fa-bars"></i>
       <span>القائمة</span>
     </div>
   </nav>
 
-  <!-- App Script -->
   <script src="js/app.js"></script>
 </body>
   </html>
