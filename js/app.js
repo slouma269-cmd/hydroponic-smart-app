@@ -19,11 +19,69 @@ const MQTT_CONFIG = {
 let mqttClient = null;
 let pendingModeChange = null;
 
+// System Alarm Thresholds
+const ALARM_LIMITS = {
+  maxAirTemp: 32.0,  
+  minAirTemp: 15.0,  
+  minWaterLevel: 20, 
+  minPh: 5.5,        
+  maxPh: 6.8         
+};
+
+// Log storage for alarms
+let alertLogs = [];
+
 // App Startup
 document.addEventListener("DOMContentLoaded", () => {
   initMQTT();
   initCharts();
+  checkNotificationStatus();
 });
+
+// Request Browser Notification Permission
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("هذا المتصفح لا يدعم إشعارات النظام.");
+    return;
+  }
+  
+  Notification.requestPermission().then(permission => {
+    updateNotificationBellIcon(permission);
+    if (permission === "granted") {
+      new Notification("تنبيهات مزرعتي الذكية", {
+        body: "تم تفعيل الإشعارات الفورية بنجاح!",
+        icon: "https://cdn-icons-png.flaticon.com/512/628/628324.png"
+      });
+    }
+  });
+}
+
+function checkNotificationStatus() {
+  if ("Notification" in window) {
+    updateNotificationBellIcon(Notification.permission);
+  }
+}
+
+function updateNotificationBellIcon(permission) {
+  const btn = document.getElementById('btn-notifications-permission');
+  if (!btn) return;
+  if (permission === 'granted') {
+    btn.innerHTML = `<i class="fa-solid fa-bell" style="color:#16a34a;" title="الإشعارات مفعّلة"></i>`;
+  } else {
+    btn.innerHTML = `<i class="fa-regular fa-bell-slash" style="color:#ef4444;" title="اضغط لتفعيل الإشعارات"></i>`;
+  }
+}
+
+// Push Browser Notification
+function sendPushNotification(title, message) {
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, {
+      body: message,
+      icon: "https://cdn-icons-png.flaticon.com/512/628/628324.png",
+      tag: title 
+    });
+  }
+}
 
 // Navigation Controller
 function switchTab(tabId, btnElement) {
@@ -42,14 +100,43 @@ function openSubPage(subType) {
 
   modal.classList.add('open');
 
-  if (subType === 'sub-nutrients') {
+  if (subType === 'sub-alerts') {
+    title.innerText = "سجل الإنذارات والتنبيهات";
+    
+    let logsHtml = alertLogs.length === 0 
+      ? `<p style="color:#64748b; text-align:center; padding: 20px;">لا توجد إنذارات حالية، النظام يعمل بشكل ممتاز 👍</p>`
+      : alertLogs.map(log => `
+          <div style="background:#fef2f2; border-right:4px solid #ef4444; padding:10px 12px; border-radius:6px; margin-bottom:8px;">
+            <div style="font-weight:bold; color:#991b1b; font-size:0.9rem;">${log.title}</div>
+            <div style="color:#7f1d1d; font-size:0.85rem;">${log.message}</div>
+            <div style="color:#94a3b8; font-size:0.75rem; margin-top:4px;">${log.time}</div>
+          </div>
+        `).join('');
+
+    content.innerHTML = `
+      <div class="card" style="margin-bottom: 12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <h4 style="margin:0;">حدود التنبيه الحالية</h4>
+          <button onclick="requestNotificationPermission()" class="btn-primary" style="padding:4px 10px; font-size:0.8rem;">تفعيل الإشعارات 🔔</button>
+        </div>
+        <div style="font-size:0.85rem; color:#64748b; margin-top:8px;">
+          • حرارة الهواء القصوى: ${ALARM_LIMITS.maxAirTemp} °C<br>
+          • أدنى مستوى للخزان: ${ALARM_LIMITS.minWaterLevel} %<br>
+          • نطاق الحموضة (pH): ${ALARM_LIMITS.minPh} - ${ALARM_LIMITS.maxPh}
+        </div>
+      </div>
+      <h4 style="margin-bottom:8px;">السجل الحالي (${alertLogs.length})</h4>
+      <div style="max-height: 250px; overflow-y: auto;">
+        ${logsHtml}
+      </div>`;
+  } else if (subType === 'sub-nutrients') {
     title.innerText = "إدارة المغذيات";
     content.innerHTML = `
       <div class="card">
         <h4>تحديد الأهداف (Target Limits)</h4>
         <label style="display:block; margin-top:10px;">Target pH: <input type="number" step="0.1" value="6.0" class="input-field"></label>
         <label style="display:block; margin-top:10px;">Target EC: <input type="number" step="0.1" value="1.8" class="input-field"></label>
-        <button class="btn-primary" style="margin-top:15px;" onclick="closeSubPage()">حفظ وتزامن</button>
+        <button class="btn-primary" style="margin-top:15px; width:100%;" onclick="closeSubPage()">حفظ وتزامن</button>
       </div>`;
   } else if (subType === 'sub-mqtt') {
     title.innerText = "إعدادات HiveMQ Cloud";
@@ -62,9 +149,6 @@ function openSubPage(subType) {
         <label style="display:block; margin-top:10px;">User:</label>
         <input type="text" value="hydro01-test" class="input-field" readonly>
       </div>`;
-  } else {
-    title.innerText = "الصفحة الفرعية";
-    content.innerHTML = `<p style="color:#64748b; margin-top:10px;">المحتوى قيد التطوير...</p>`;
   }
 }
 
@@ -112,7 +196,7 @@ function initMQTT() {
 
   if (statusTag) {
     statusTag.className = 'connection-tag offline';
-    statusTag.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال بالكلود...';
+    statusTag.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال...';
   }
 
   try {
@@ -122,30 +206,25 @@ function initMQTT() {
       console.log('Successfully connected to HiveMQ Cloud Cluster!');
       if (statusTag) {
         statusTag.className = 'connection-tag online';
-        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل (HiveMQ Cloud)';
+        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل';
       }
 
-      mqttClient.subscribe(MQTT_CONFIG.topics.telemetry, (err) => {
-        if (!err) {
-          console.log(`Subscribed to Cloud Topic: ${MQTT_CONFIG.topics.telemetry}`);
-        }
-      });
+      mqttClient.subscribe(MQTT_CONFIG.topics.telemetry);
     });
 
     mqttClient.on('message', (topic, payload) => {
-      console.log("Cloud Payload Received [" + topic + "]:", payload.toString());
       try {
         const data = JSON.parse(payload.toString());
         if (topic === MQTT_CONFIG.topics.telemetry) {
           updateSensorUI(data);
+          evaluateAlarms(data);
         }
       } catch (e) {
         console.error("JSON Error:", e);
       }
     });
 
-    mqttClient.on('error', (err) => {
-      console.error('MQTT Connection Error:', err);
+    mqttClient.on('error', () => {
       if (statusTag) {
         statusTag.className = 'connection-tag offline';
         statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> خطأ اتصال';
@@ -169,6 +248,33 @@ function reconnectMQTT() {
   closeSubPage();
 }
 
+// Evaluate Sensor Limits and Trigger Alarms
+function evaluateAlarms(data) {
+  const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+  if (data.air_temp !== undefined && data.air_temp > ALARM_LIMITS.maxAirTemp) {
+    triggerAlarm("ارتفاع درجة الحرارة 🔥", `درجة حرارة الهواء ارتفعت إلى ${data.air_temp}°C!`, now);
+  }
+
+  if (data.tank_level !== undefined && data.tank_level < ALARM_LIMITS.minWaterLevel) {
+    triggerAlarm("انخفاض مستوى الخزان ⚠️", `مستوى خزان الماء انخفض إلى ${data.tank_level}%!`, now);
+  }
+
+  if (data.ph !== undefined) {
+    if (data.ph < ALARM_LIMITS.minPh || data.ph > ALARM_LIMITS.maxPh) {
+      triggerAlarm("انحراف مستوى pH 🧪", `مستوى الحموضة حالياً هو ${data.ph} وخارج النطاق الآمن!`, now);
+    }
+  }
+}
+
+function triggerAlarm(title, message, time) {
+  const exists = alertLogs.some(log => log.title === title && log.message === message);
+  if (!exists) {
+    alertLogs.unshift({ title, message, time });
+    sendPushNotification(title, message);
+  }
+}
+
 // Dynamic UI Updater
 function updateSensorUI(data) {
   const setHtml = (id, val) => {
@@ -186,13 +292,11 @@ function updateSensorUI(data) {
     if (el) el.value = parseFloat(val) || 0;
   };
 
-  // 1. Environmental & Water Values
   if (data.air_temp !== undefined) setHtml('dash-air-temp', `${data.air_temp} <small>°C</small>`);
   if (data.air_hum !== undefined) setHtml('dash-air-hum', `${data.air_hum} <small>%</small>`);
   if (data.water_temp !== undefined) setHtml('dash-water-temp', `${data.water_temp} <small>°C</small>`);
   if (data.tank_level !== undefined) setHtml('dash-water-level', `${data.tank_level} <small>%</small>`);
 
-  // 2. Nutrients & Gauges
   if (data.ph !== undefined) {
     setText('dash-ph', data.ph);
     setText('gauge-ph-val', data.ph);
@@ -205,13 +309,10 @@ function updateSensorUI(data) {
     setProgress('#tab-monitoring progress[max="5"]', data.ec);
   }
 
-  // 3. System Mode Sync
   if (data.mode !== undefined) {
-    const modeUpper = String(data.mode).toUpperCase();
-    updateModeUI(modeUpper);
+    updateModeUI(String(data.mode).toUpperCase());
   }
 
-  // 4. Relay Switches Sync
   if (data.pump !== undefined) {
     const el = document.getElementById('dev-pump1');
     if (el) el.checked = (String(data.pump).toUpperCase() === 'ON');
@@ -228,7 +329,6 @@ function updateSensorUI(data) {
   }
 }
 
-// Function to update System Mode Buttons and Lock/Unlock manual controls
 function updateModeUI(mode) {
   const modeValEl = document.getElementById('dash-mode-val');
   const btnAuto = document.getElementById('btn-mode-auto');
@@ -258,27 +358,22 @@ function updateModeUI(mode) {
     }
   }
 
-  // Lock or unlock manual switches
   const deviceSwitches = document.querySelectorAll('#tab-controls input[type="checkbox"]');
   deviceSwitches.forEach(sw => {
     sw.disabled = (mode === 'AUTO');
   });
 }
 
-// Send Mode Switch Command to ESP32
 function setSystemMode(newMode) {
   if (mqttClient && mqttClient.connected) {
     const payload = JSON.stringify({ mode: newMode });
     mqttClient.publish(MQTT_CONFIG.topics.commands, payload);
-    console.log("Published System Mode Command:", payload);
-    
     updateModeUI(newMode);
   } else {
     alert('التطبيق غير متصل بالسيرفر حالياً!');
   }
 }
 
-// Relay Control Command Publisher
 function toggleDevice(deviceId, state) {
   if (mqttClient && mqttClient.connected) {
     const payload = JSON.stringify({ 
@@ -286,13 +381,11 @@ function toggleDevice(deviceId, state) {
       state: state ? "ON" : "OFF"
     });
     mqttClient.publish(MQTT_CONFIG.topics.commands, payload);
-    console.log("Published Command to Cloud:", payload);
   } else {
     alert('التطبيق غير متصل بالسيرفر حالياً!');
   }
 }
 
-// Render History Charts
 function initCharts() {
   const canvas = document.getElementById('chart-temp');
   if (!canvas) return;
@@ -311,5 +404,5 @@ function initCharts() {
       }]
     }
   });
-          }
+                                      }
       
