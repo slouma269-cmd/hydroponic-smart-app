@@ -1,14 +1,12 @@
-// MQTT Global Configuration with Fallbacks
+// MQTT Configuration tailored for your original telemetry topic
 const MQTT_CONFIG = {
-  // الخادم الرئيسي والبديل للتأكد من عمل الاتصال في كافة المتصفحات
   primaryBroker: 'wss://broker.hivemq.com:8884/mqtt',
   fallbackBroker: 'wss://broker.emqx.io:8084/mqtt',
   
   clientId: 'Hydroponic_Web_' + Math.floor(Math.random() * 100000),
   
   topics: {
-    sensors: 'greenhouse/GH001/sensors',
-    devices: 'greenhouse/GH001/devices',
+    telemetry: 'greenhouse/GH001/telemetry',
     commands: 'greenhouse/GH001/commands'
   }
 };
@@ -53,8 +51,8 @@ function openSubPage(subType) {
       <div class="card">
         <label style="display:block; margin-bottom:5px;">حالة الاتصال الحالية:</label>
         <button class="btn-primary" style="background:#0284c7; margin-bottom:15px;" onclick="reconnectMQTT()">إعادة الاتصال بالخادم الآن 🔄</button>
-        <label style="display:block;">Greenhouse ID:</label>
-        <input type="text" value="GH001" class="input-field" readonly>
+        <label style="display:block;">Telemetry Topic:</label>
+        <input type="text" value="${MQTT_CONFIG.topics.telemetry}" class="input-field" readonly>
       </div>`;
   } else {
     title.innerText = "الصفحة الفرعية";
@@ -70,7 +68,6 @@ function closeSubPage() {
 function initMQTT(brokerUrl) {
   const statusTag = document.getElementById('global-status-tag');
   
-  // قطع أي اتصال سابق إن وجد
   if (mqttClient) {
     try { mqttClient.end(true); } catch(e) {}
   }
@@ -92,25 +89,27 @@ function initMQTT(brokerUrl) {
       statusTag.className = 'connection-tag online';
       statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل (GH001)';
 
-      // Subscribe to topics
-      mqttClient.subscribe(MQTT_CONFIG.topics.sensors);
-      mqttClient.subscribe(MQTT_CONFIG.topics.devices);
+      // Subscribe strictly to greenhouse/GH001/telemetry
+      mqttClient.subscribe(MQTT_CONFIG.topics.telemetry, (err) => {
+        if (!err) {
+          console.log(`Subscribed to: ${MQTT_CONFIG.topics.telemetry}`);
+        }
+      });
     });
 
     mqttClient.on('message', (topic, payload) => {
       try {
         const data = JSON.parse(payload.toString());
-        if (topic === MQTT_CONFIG.topics.sensors) {
+        if (topic === MQTT_CONFIG.topics.telemetry) {
           updateSensorUI(data);
         }
       } catch (e) {
-        console.error("JSON Error:", e);
+        console.error("JSON Parsing Error:", e);
       }
     });
 
     mqttClient.on('error', (err) => {
       console.error('MQTT Error:', err);
-      // تجربة الخادم البديل في حال فشل الخادم الرئيسي
       if (brokerUrl === MQTT_CONFIG.primaryBroker) {
         console.warn('Switching to Fallback Broker...');
         initMQTT(MQTT_CONFIG.fallbackBroker);
@@ -126,7 +125,7 @@ function initMQTT(brokerUrl) {
     });
 
   } catch (e) {
-    console.error('MQTT Init Exception:', e);
+    console.error('MQTT Connection Exception:', e);
   }
 }
 
@@ -135,13 +134,15 @@ function reconnectMQTT() {
   closeSubPage();
 }
 
-// Dynamic UI Update
+// Dynamic UI Updater mapping your exact JSON telemetry keys
 function updateSensorUI(data) {
-  if (data.airTemp !== undefined) document.getElementById('dash-air-temp').innerHTML = `${data.airTemp} <small>°C</small>`;
-  if (data.airHum !== undefined) document.getElementById('dash-air-hum').innerHTML = `${data.airHum} <small>%</small>`;
-  if (data.waterTemp !== undefined) document.getElementById('dash-water-temp').innerHTML = `${data.waterTemp} <small>°C</small>`;
-  if (data.waterLevel !== undefined) document.getElementById('dash-water-level').innerHTML = `${data.waterLevel} <small>%</small>`;
+  // Environmental & Water Measurements
+  if (data.air_temp !== undefined) document.getElementById('dash-air-temp').innerHTML = `${data.air_temp} <small>°C</small>`;
+  if (data.air_hum !== undefined) document.getElementById('dash-air-hum').innerHTML = `${data.air_hum} <small>%</small>`;
+  if (data.water_temp !== undefined) document.getElementById('dash-water-temp').innerHTML = `${data.water_temp} <small>°C</small>`;
+  if (data.tank_level !== undefined) document.getElementById('dash-water-level').innerHTML = `${data.tank_level} <small>%</small>`;
   
+  // Nutrients Measurements
   if (data.ph !== undefined) {
     document.getElementById('dash-ph').innerText = data.ph;
     document.getElementById('gauge-ph-val').innerText = data.ph;
@@ -150,9 +151,28 @@ function updateSensorUI(data) {
     document.getElementById('dash-ec').innerText = data.ec;
     document.getElementById('gauge-ec-val').innerText = `${data.ec} mS/cm`;
   }
+
+  // Operation Mode
+  if (data.mode !== undefined) {
+    document.getElementById('dash-mode-val').innerText = data.mode === 'AUTO' ? 'تلقائي' : 'يدوي';
+  }
+
+  // Sync Relay Switches with hardware state
+  if (data.pump !== undefined) {
+    const pumpSwitch = document.getElementById('dev-pump1');
+    if (pumpSwitch) pumpSwitch.checked = (data.pump === 'ON');
+  }
+  if (data.fan !== undefined) {
+    const fanSwitch = document.getElementById('dev-fan1');
+    if (fanSwitch) fanSwitch.checked = (data.fan === 'ON');
+  }
+  if (data.pad !== undefined) {
+    const padSwitch = document.getElementById('dev-pad');
+    if (padSwitch) padSwitch.checked = (data.pad === 'ON');
+  }
 }
 
-// Control Relays Command Publisher
+// Relay Control Command Publisher
 function toggleDevice(deviceId, state) {
   if (mqttClient && mqttClient.connected) {
     const payload = JSON.stringify({ 
@@ -182,4 +202,5 @@ function initCharts() {
       }]
     }
   });
-                  }
+}
+  
