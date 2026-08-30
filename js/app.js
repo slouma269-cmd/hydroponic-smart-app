@@ -1,6 +1,5 @@
 // HiveMQ Cloud Credentials & Topics Configuration
 const MQTT_CONFIG = {
-  // استخدام بروتوكول WSS للاتصال الآمن عبر المتصفح بالـ Cloud Cluster
   host: 'wss://99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud:8884/mqtt',
   options: {
     username: 'hydro01-test',
@@ -18,6 +17,7 @@ const MQTT_CONFIG = {
 };
 
 let mqttClient = null;
+let pendingModeChange = null;
 
 // App Startup
 document.addEventListener("DOMContentLoaded", () => {
@@ -48,19 +48,19 @@ function openSubPage(subType) {
       <div class="card">
         <h4>تحديد الأهداف (Target Limits)</h4>
         <label style="display:block; margin-top:10px;">Target pH: <input type="number" step="0.1" value="6.0" class="input-field"></label>
-        <label style="display:block;">Target EC: <input type="number" step="0.1" value="1.8" class="input-field"></label>
-        <button class="btn-primary" onclick="closeSubPage()">حفظ وتزامن</button>
+        <label style="display:block; margin-top:10px;">Target EC: <input type="number" step="0.1" value="1.8" class="input-field"></label>
+        <button class="btn-primary" style="margin-top:15px;" onclick="closeSubPage()">حفظ وتزامن</button>
       </div>`;
   } else if (subType === 'sub-mqtt') {
     title.innerText = "إعدادات HiveMQ Cloud";
     content.innerHTML = `
       <div class="card">
         <label style="display:block; margin-bottom:5px;">حالة الاتصال بالكلود:</label>
-        <button class="btn-primary" style="background:#0284c7; margin-bottom:15px;" onclick="reconnectMQTT()">إعادة الاتصال 🔄</button>
-        <label style="display:block;">Cloud Host:</label>
+        <button class="btn-primary" style="background:#0284c7; margin-bottom:15px; width:100%;" onclick="reconnectMQTT()">إعادة الاتصال 🔄</button>
+        <label style="display:block; margin-top:10px;">Cloud Host:</label>
         <input type="text" value="99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud" class="input-field" readonly>
-        <label style="display:block;">User:</label>
-        <input type="text" value="hydro01" class="input-field" readonly>
+        <label style="display:block; margin-top:10px;">User:</label>
+        <input type="text" value="hydro01-test" class="input-field" readonly>
       </div>`;
   } else {
     title.innerText = "الصفحة الفرعية";
@@ -72,7 +72,37 @@ function closeSubPage() {
   document.getElementById('sub-page-modal').classList.remove('open');
 }
 
-// MQTT Connection Engine for HiveMQ Cloud
+// Mode Confirmation Modal Functions
+function promptModeChange(newMode) {
+  pendingModeChange = newMode;
+  const modal = document.getElementById('mode-confirm-modal');
+  const text = document.getElementById('mode-confirm-text');
+  const confirmBtn = document.getElementById('btn-confirm-action');
+
+  if (newMode === 'AUTO') {
+    text.innerText = "هل أنت متأكد من التحويل للوضع التلقائي؟ سيقوم النظام بإدارة الأجهزة آلياً وتعطيل التحكم اليدوي.";
+  } else {
+    text.innerText = "هل أنت متأكد من التحويل للوضع اليدوي؟ ستتمكن من التحكم المباشر بمفاتيح التشغيل والإيقاف.";
+  }
+
+  confirmBtn.onclick = executeModeChange;
+  modal.classList.add('open');
+}
+
+function closeModeModal() {
+  const modal = document.getElementById('mode-confirm-modal');
+  if (modal) modal.classList.remove('open');
+  pendingModeChange = null;
+}
+
+function executeModeChange() {
+  if (pendingModeChange) {
+    setSystemMode(pendingModeChange);
+  }
+  closeModeModal();
+}
+
+// MQTT Connection Engine
 function initMQTT() {
   const statusTag = document.getElementById('global-status-tag');
   
@@ -86,7 +116,6 @@ function initMQTT() {
   }
 
   try {
-    // Connect to HiveMQ Cloud via WebSocket Secure
     mqttClient = mqtt.connect(MQTT_CONFIG.host, MQTT_CONFIG.options);
 
     mqttClient.on('connect', () => {
@@ -96,12 +125,9 @@ function initMQTT() {
         statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل (HiveMQ Cloud)';
       }
 
-      // Subscribe to telemetry topic
       mqttClient.subscribe(MQTT_CONFIG.topics.telemetry, (err) => {
         if (!err) {
           console.log(`Subscribed to Cloud Topic: ${MQTT_CONFIG.topics.telemetry}`);
-        } else {
-          console.error("Subscription Error:", err);
         }
       });
     });
@@ -119,10 +145,10 @@ function initMQTT() {
     });
 
     mqttClient.on('error', (err) => {
-      console.error('HiveMQ Cloud Connection Error:', err);
+      console.error('MQTT Connection Error:', err);
       if (statusTag) {
         statusTag.className = 'connection-tag offline';
-        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> خطأ اتصال بالكلود';
+        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> خطأ اتصال';
       }
     });
 
@@ -143,7 +169,7 @@ function reconnectMQTT() {
   closeSubPage();
 }
 
-// Dynamic Safe UI Updater
+// Dynamic UI Updater
 function updateSensorUI(data) {
   const setHtml = (id, val) => {
     const el = document.getElementById(id);
@@ -179,9 +205,10 @@ function updateSensorUI(data) {
     setProgress('#tab-monitoring progress[max="5"]', data.ec);
   }
 
-  // 3. System Mode
+  // 3. System Mode Sync
   if (data.mode !== undefined) {
-    setText('dash-mode-val', String(data.mode).toUpperCase() === 'AUTO' ? 'تلقائي' : 'يدوي');
+    const modeUpper = String(data.mode).toUpperCase();
+    updateModeUI(modeUpper);
   }
 
   // 4. Relay Switches Sync
@@ -198,6 +225,56 @@ function updateSensorUI(data) {
   if (data.pad !== undefined) {
     const el = document.getElementById('dev-pad');
     if (el) el.checked = (String(data.pad).toUpperCase() === 'ON');
+  }
+}
+
+// Function to update System Mode Buttons and Lock/Unlock manual controls
+function updateModeUI(mode) {
+  const modeValEl = document.getElementById('dash-mode-val');
+  const btnAuto = document.getElementById('btn-mode-auto');
+  const btnManual = document.getElementById('btn-mode-manual');
+
+  if (modeValEl) {
+    modeValEl.innerText = mode === 'AUTO' ? 'تلقائي (AUTO)' : 'يدوي (MANUAL)';
+  }
+
+  if (btnAuto && btnManual) {
+    if (mode === 'AUTO') {
+      btnAuto.style.background = '#0284c7';
+      btnAuto.style.color = '#ffffff';
+      btnAuto.setAttribute('onclick', 'void(0)');
+      
+      btnManual.style.background = '#334155';
+      btnManual.style.color = '#94a3b8';
+      btnManual.setAttribute('onclick', "promptModeChange('MANUAL')");
+    } else {
+      btnManual.style.background = '#ea580c';
+      btnManual.style.color = '#ffffff';
+      btnManual.setAttribute('onclick', 'void(0)');
+
+      btnAuto.style.background = '#334155';
+      btnAuto.style.color = '#94a3b8';
+      btnAuto.setAttribute('onclick', "promptModeChange('AUTO')");
+    }
+  }
+
+  // Lock or unlock manual switches
+  const deviceSwitches = document.querySelectorAll('#tab-controls input[type="checkbox"]');
+  deviceSwitches.forEach(sw => {
+    sw.disabled = (mode === 'AUTO');
+  });
+}
+
+// Send Mode Switch Command to ESP32
+function setSystemMode(newMode) {
+  if (mqttClient && mqttClient.connected) {
+    const payload = JSON.stringify({ mode: newMode });
+    mqttClient.publish(MQTT_CONFIG.topics.commands, payload);
+    console.log("Published System Mode Command:", payload);
+    
+    updateModeUI(newMode);
+  } else {
+    alert('التطبيق غير متصل بالسيرفر حالياً!');
   }
 }
 
@@ -234,5 +311,5 @@ function initCharts() {
       }]
     }
   });
-      }
-            
+          }
+      
