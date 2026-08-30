@@ -3,172 +3,250 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hydroponic Smart App</title>
+  <title>نظام إدارة الزراعة المائية | Hydroponic Control</title>
   
-  <!-- Fonts & Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- External Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  
-  <!-- Custom Stylesheet -->
+  <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="css/style.css">
+  
+  <!-- FontAwesome Icons & Chart.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- MQTT Library -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
 
-  <!-- Top App Header -->
-  <header class="app-bar">
-    <div class="brand">
-      <i class="fa-solid fa-seedling brand-icon"></i>
-      <div>
-        <h1>البيت المحمي GH001</h1>
-        <span class="connection-tag offline" id="global-status-tag">
-          <i class="fa-solid fa-circle"></i> غير متصل
-        </span>
-      </div>
+  <!-- Top Header -->
+  <header class="app-header">
+    <div class="logo-area">
+      <i class="fa-solid fa-seedling logo-icon"></i>
+      <h2>مزرعتي الذكية</h2>
+    </div>
+    <div id="global-status-tag" class="connection-tag offline">
+      <i class="fa-solid fa-circle"></i> جاري الاتصال...
     </div>
   </header>
 
-  <!-- Main Container -->
-  <div class="container">
+  <!-- Main Content Container -->
+  <main class="app-content">
 
-    <!-- PAGE 1: DASHBOARD -->
-    <section id="tab-home" class="page-tab active">
-      <div class="status-banner card">
-        <div class="status-item">
-          <i class="fa-solid fa-wifi text-green"></i>
-          <div><small>Wi-Fi</small><br><strong id="dash-wifi-val">متصل</strong></div>
+    <!-- PAGE 1: Dashboard Tab -->
+    <section id="tab-dashboard" class="page-tab active">
+      <div class="tab-title">
+        <h3>اللوحة الرئيسية</h3>
+        <p>نظرة عامة على حالة البيئة والمغذيات</p>
+      </div>
+
+      <!-- Mode Selection Card -->
+      <div class="card mode-card">
+        <div>
+          <span class="card-label">وضع تشغيل النظام</span>
+          <div id="dash-mode-val" class="mode-status">تلقائي (AUTO)</div>
         </div>
-        <div class="status-item">
-          <i class="fa-solid fa-cloud text-blue"></i>
-          <div><small>MQTT</small><br><strong id="dash-mqtt-val">متصل</strong></div>
-        </div>
-        <div class="status-item">
-          <i class="fa-solid fa-robot text-purple"></i>
-          <div><small>الوضع</small><br><strong id="dash-mode-val">تلقائي</strong></div>
+        <div class="mode-btns">
+          <button id="btn-mode-auto" class="btn-mode">AUTO</button>
+          <button id="btn-mode-manual" class="btn-mode">MANUAL</button>
         </div>
       </div>
 
-      <div class="section-title">البيئة والخزان</div>
-      <div class="grid-2">
-        <div class="card metric-card">
-          <i class="fa-solid fa-temperature-half icon bg-orange"></i>
-          <div><span>حرارة الهواء</span><h2 id="dash-air-temp">28.5 <small>°C</small></h2></div>
+      <!-- Sensor Cards Grid -->
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-header">
+            <span>حرارة الهواء</span>
+            <i class="fa-solid fa-temperature-high icon-temp"></i>
+          </div>
+          <div id="dash-air-temp" class="card-value">-- <small>°C</small></div>
         </div>
-        <div class="card metric-card">
-          <i class="fa-solid fa-droplet icon bg-cyan"></i>
-          <div><span>رطوبة الهواء</span><h2 id="dash-air-hum">65 <small>%</small></h2></div>
-        </div>
-        <div class="card metric-card">
-          <i class="fa-solid fa-faucet-drip icon bg-blue"></i>
-          <div><span>حرارة الماء</span><h2 id="dash-water-temp">22.1 <small>°C</small></h2></div>
-        </div>
-        <div class="card metric-card">
-          <i class="fa-solid fa-water icon bg-teal"></i>
-          <div><span>مستوى الماء</span><h2 id="dash-water-level">80 <small>%</small></h2></div>
-        </div>
-      </div>
 
-      <div class="section-title">المحلول المغذي</div>
-      <div class="grid-2">
-        <div class="card metric-card">
-          <i class="fa-solid fa-flask icon bg-purple"></i>
-          <div><span>الحموضة (pH)</span><h2 id="dash-ph">6.2</h2></div>
+        <div class="card">
+          <div class="card-header">
+            <span>رطوبة الهواء</span>
+            <i class="fa-solid fa-droplet icon-hum"></i>
+          </div>
+          <div id="dash-air-hum" class="card-value">-- <small>%</small></div>
         </div>
-        <div class="card metric-card">
-          <i class="fa-solid fa-bolt icon bg-amber"></i>
-          <div><span>الملوحة (EC)</span><h2 id="dash-ec">1.8 <small>mS</small></h2></div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>حرارة الماء</span>
+            <i class="fa-solid fa-thermometer icon-water"></i>
+          </div>
+          <div id="dash-water-temp" class="card-value">-- <small>°C</small></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>مستوى الخزان</span>
+            <i class="fa-solid fa-water icon-level"></i>
+          </div>
+          <div id="dash-water-level" class="card-value">-- <small>%</small></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>الحموضة (pH)</span>
+            <i class="fa-solid fa-flask icon-ph"></i>
+          </div>
+          <div id="dash-ph" class="card-value">--</div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span>الملوحة (EC)</span>
+            <i class="fa-solid fa-bolt icon-ec"></i>
+          </div>
+          <div id="dash-ec" class="card-value">-- <small>mS</small></div>
         </div>
       </div>
     </section>
 
-    <!-- PAGE 2: DEVICES -->
-    <section id="tab-devices" class="page-tab">
-      <div class="section-title">المضخات (Pumps)</div>
-      <div class="device-card card">
-        <div class="dev-info"><i class="fa-solid fa-faucet-drip bg-blue icon"></i><div><strong>مضخة الري (Pump 1)</strong><small>الوضع: تلقائي</small></div></div>
-        <label class="switch"><input type="checkbox" id="dev-pump1" onchange="toggleDevice('pump1', this.checked)"><span class="slider"></span></label>
-      </div>
-      <div class="device-card card">
-        <div class="dev-info"><i class="fa-solid fa-flask bg-purple icon"></i><div><strong>مضخة التسميد (Pump 2)</strong><small>الوضع: يدوي</small></div></div>
-        <label class="switch"><input type="checkbox" id="dev-pump2" onchange="toggleDevice('pump2', this.checked)"><span class="slider"></span></label>
-      </div>
-      <div class="device-card card">
-        <div class="dev-info"><i class="fa-solid fa-water bg-teal icon"></i><div><strong>مضخة الخزان (Pump 3)</strong><small>الوضع: تلقائي</small></div></div>
-        <label class="switch"><input type="checkbox" id="dev-pump3" onchange="toggleDevice('pump3', this.checked)"><span class="slider"></span></label>
-      </div>
-
-      <div class="section-title">التهوية والتبريد</div>
-      <div class="device-card card">
-        <div class="dev-info"><i class="fa-solid fa-fan bg-green icon"></i><div><strong>مروحة الشفط (Fan 1)</strong><small>تلقائي عند ≥ 28°C</small></div></div>
-        <label class="switch"><input type="checkbox" id="dev-fan1" onchange="toggleDevice('fan1', this.checked)"><span class="slider"></span></label>
-      </div>
-      <div class="device-card card">
-        <div class="dev-info"><i class="fa-solid fa-snowflake bg-indigo icon"></i><div><strong>نظام التبريد (Pad Cooling)</strong><small>الوضع: تلقائي</small></div></div>
-        <label class="switch"><input type="checkbox" id="dev-pad" onchange="toggleDevice('pad', this.checked)"><span class="slider"></span></label>
-      </div>
-    </section>
-
-    <!-- PAGE 3: LIVE MONITORING -->
+    <!-- PAGE 2: Monitoring & Charts Tab -->
     <section id="tab-monitoring" class="page-tab">
-      <div class="section-title">المراقبة المباشرة</div>
-      <div class="card">
-        <h4>درجة الحموضة (pH)</h4>
-        <h2 id="gauge-ph-val" class="gauge-number color-purple">6.2</h2>
-        <progress max="14" value="6.2" class="gauge-bar"></progress>
+      <div class="tab-title">
+        <h3>المراقبة والرسوم البيانية</h3>
+        <p>متابعة القراءات والتحليلات</p>
       </div>
-      <div class="card">
-        <h4>الملوحة (EC)</h4>
-        <h2 id="gauge-ec-val" class="gauge-number color-amber">1.8 mS/cm</h2>
-        <progress max="5" value="1.8" class="gauge-bar"></progress>
+
+      <div class="cards-grid">
+        <div class="card">
+          <h4>مستوى pH الحالية</h4>
+          <div id="gauge-ph-val" class="gauge-value">--</div>
+          <progress value="0" max="14" class="progress-bar"></progress>
+        </div>
+
+        <div class="card">
+          <h4>مستوى EC الحالية</h4>
+          <div id="gauge-ec-val" class="gauge-value">-- mS/cm</div>
+          <progress value="0" max="5" class="progress-bar"></progress>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <h4>سجل الحرارة</h4>
+        <canvas id="chart-temp"></canvas>
       </div>
     </section>
 
-    <!-- PAGE 4: HISTORY -->
-    <section id="tab-history" class="page-tab">
-      <div class="section-title">السجل والتاريخ</div>
-      <div class="card">
-        <h4>تغير حرارة الهواء (°C)</h4>
-        <canvas id="chart-temp" height="200"></canvas>
+    <!-- PAGE 3: Manual Controls Tab -->
+    <section id="tab-controls" class="page-tab">
+      <div class="tab-title">
+        <h3>التحكم بالأجهزة</h3>
+        <p>التشغيل والإيقاف اليدوي للأجهزة</p>
+      </div>
+
+      <div class="controls-list">
+        <div class="control-item">
+          <div class="control-info">
+            <i class="fa-solid fa-pump-soap"></i>
+            <div>
+              <strong>مضخة المغذيات</strong>
+              <span>Nutrient Pump</span>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="dev-pump1" onchange="toggleDevice('pump', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-item">
+          <div class="control-info">
+            <i class="fa-solid fa-fan"></i>
+            <div>
+              <strong>مروحة التبريد</strong>
+              <span>Exhaust Fan</span>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="dev-fan1" onchange="toggleDevice('fan', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="control-item">
+          <div class="control-info">
+            <i class="fa-solid fa-snowflake"></i>
+            <div>
+              <strong>وساد التبريد (Cooling Pad)</strong>
+              <span>Cooling Pad</span>
+            </div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="dev-pad" onchange="toggleDevice('pad', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
       </div>
     </section>
 
-    <!-- PAGE 5: MENU -->
+    <!-- PAGE 4: Menu / Sub-pages Tab -->
     <section id="tab-menu" class="page-tab">
-      <div class="section-title">القائمة والأدوات المتقدمة</div>
-      <div class="card">
-        <div class="menu-item" onclick="openSubPage('sub-nutrients')"><div class="icon bg-purple"><i class="fa-solid fa-flask"></i></div><span>إدارة المغذيات</span><i class="fa-solid fa-chevron-left arrow"></i></div>
-        <div class="menu-item" onclick="openSubPage('sub-stage')"><div class="icon bg-green"><i class="fa-solid fa-leaf"></i></div><span>مراحل النمو</span><i class="fa-solid fa-chevron-left arrow"></i></div>
-        <div class="menu-item" onclick="openSubPage('sub-calibration')"><div class="icon bg-amber"><i class="fa-solid fa-sliders"></i></div><span>معايرة الحساسات</span><i class="fa-solid fa-chevron-left arrow"></i></div>
-        <div class="menu-item" onclick="openSubPage('sub-mqtt')"><div class="icon bg-blue"><i class="fa-solid fa-wifi"></i></div><span>إعدادات MQTT والشبكة</span><i class="fa-solid fa-chevron-left arrow"></i></div>
-        <div class="menu-item"><div class="icon bg-red"><i class="fa-solid fa-arrow-right-from-bracket"></i></div><span class="text-red">تسجيل الخروج</span><i class="fa-solid fa-chevron-left arrow"></i></div>
+      <div class="tab-title">
+        <h3>القائمة والإعدادات</h3>
+        <p>إدارة النظام والاتصالات</p>
+      </div>
+
+      <div class="menu-grid">
+        <button class="menu-card" onclick="openSubPage('sub-nutrients')">
+          <i class="fa-solid fa-vial-circle-check"></i>
+          <span>إدارة المغذيات</span>
+        </button>
+        <button class="menu-card" onclick="openSubPage('sub-mqtt')">
+          <i class="fa-solid fa-network-wired"></i>
+          <span>إعدادات MQTT والشبكة</span>
+        </button>
       </div>
     </section>
 
-  </div>
+  </main>
 
-  <!-- Dynamic Sub-Pages Modal -->
-  <div id="sub-page-modal" class="sub-modal">
-    <div class="modal-header">
-      <button class="icon-btn" onclick="closeSubPage()"><i class="fa-solid fa-arrow-right"></i></button>
-      <h3 id="modal-title">العنوان</h3>
-    </div>
-    <div class="modal-body" id="modal-content"></div>
-  </div>
-
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="switchTab('tab-home', this)"><i class="fa-solid fa-house"></i><span>الرئيسية</span></button>
-    <button class="nav-item" onclick="switchTab('tab-devices', this)"><i class="fa-solid fa-sliders"></i><span>الأجهزة</span></button>
-    <button class="nav-item" onclick="switchTab('tab-monitoring', this)"><i class="fa-solid fa-chart-line"></i><span>المباشر</span></button>
-    <button class="nav-item" onclick="switchTab('tab-history', this)"><i class="fa-solid fa-clock-rotate-left"></i><span>السجل</span></button>
-    <button class="nav-item" onclick="switchTab('tab-menu', this)"><i class="fa-solid fa-bars"></i><span>القائمة</span></button>
+  <!-- Bottom Navigation Bar -->
+  <nav class="app-nav">
+    <button class="nav-item active" onclick="switchTab('tab-dashboard', this)">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>الرئيسية</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('tab-monitoring', this)">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>المراقبة</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('tab-controls', this)">
+      <i class="fa-solid fa-sliders"></i>
+      <span>التحكم</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('tab-menu', this)">
+      <i class="fa-solid fa-ellipsis"></i>
+      <span>القائمة</span>
+    </button>
   </nav>
 
-  <!-- Application Logic JS -->
+  <!-- Menu Sub-Page Modal -->
+  <div id="sub-page-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">العنوان</h3>
+        <button class="btn-close" onclick="closeSubPage()">&times;</button>
+      </div>
+      <div id="modal-content" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Mode Confirmation Modal -->
+  <div id="mode-confirm-modal" class="modal">
+    <div class="modal-content confirm-modal">
+      <h3>تأكيد تغيير وضع التشغيل</h3>
+      <p id="mode-confirm-text">هل أنت متأكد من تغيير وضع التشغيل؟</p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="btn-confirm-action">نعم، تأكيد</button>
+        <button class="btn-secondary" onclick="closeModeModal()">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
   <script src="js/app.js"></script>
 </body>
-          </html>
-          
+  </html>
+                                                               
