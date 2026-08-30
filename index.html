@@ -23,8 +23,13 @@
       <i class="fa-solid fa-seedling logo-icon"></i>
       <h2>مزرعتي الذكية</h2>
     </div>
-    <div id="global-status-tag" class="connection-tag offline">
-      <i class="fa-solid fa-circle"></i> جاري الاتصال...
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button id="btn-notifications-permission" onclick="requestNotificationPermission()" style="background:none; border:none; cursor:pointer; color:#64748b; font-size:1.1rem;" title="تفعيل إشعارات المتصفح">
+        <i class="fa-regular fa-bell"></i>
+      </button>
+      <div id="global-status-tag" class="connection-tag offline">
+        <i class="fa-solid fa-circle"></i> جاري الاتصال...
+      </div>
     </div>
   </header>
 
@@ -185,10 +190,14 @@
     <section id="tab-menu" class="page-tab">
       <div class="tab-title">
         <h3>القائمة والإعدادات</h3>
-        <p>إدارة النظام والاتصالات</p>
+        <p>إدارة النظام والاتصالات والتنبيهات</p>
       </div>
 
       <div class="menu-grid">
+        <button class="menu-card" onclick="openSubPage('sub-alerts')">
+          <i class="fa-solid fa-bell" style="color: #ef4444;"></i>
+          <span>الإنذارات والتنبيهات</span>
+        </button>
         <button class="menu-card" onclick="openSubPage('sub-nutrients')">
           <i class="fa-solid fa-vial-circle-check"></i>
           <span>إدارة المغذيات</span>
@@ -249,4 +258,4 @@
   <script src="js/app.js"></script>
 </body>
   </html>
-                                                               
+        
