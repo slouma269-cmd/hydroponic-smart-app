@@ -459,36 +459,99 @@ function toggleDevice(deviceId, state) {
 }
 
 // ==========================================
-// 8. Charts Initialization Engine
+// Dynamic Monitoring Chart Logic (Sensor & Time Filters)
 // ==========================================
+let activeSensor = 'waterTemp';
+let activeTimeRange = '24h';
+
+// Mock Historical Datasets for Filters
+const mockChartData = {
+  waterTemp: {
+    label: 'حرارة الماء (°C)',
+    color: '#0284c7',
+    minY: 15, maxY: 30,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [23.1, 23.2, 23.4, 23.3, 23.5, 23.4] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [22.1, 22.8, 22.2, 23.4, 22.9, 24.2, 22.6] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [22.5, 23.0, 23.8, 22.9, 23.1, 24.0, 23.4] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [22.8, 23.2, 23.6, 23.1] }
+  },
+  airTemp: {
+    label: 'حرارة الهواء (°C)',
+    color: '#ea580c',
+    minY: 10, maxY: 40,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [27.5, 27.6, 27.8, 28.0, 27.9, 27.8] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [24.0, 23.5, 26.2, 31.0, 29.5, 26.8, 25.0] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [26.5, 27.2, 28.1, 27.9, 28.5, 29.0, 27.8] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [26.0, 27.5, 28.2, 27.9] }
+  },
+  airHum: {
+    label: 'رطوبة الهواء (%)',
+    color: '#06b6d4',
+    minY: 20, maxY: 100,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [67, 68, 68, 69, 68, 68] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [75, 78, 65, 55, 60, 70, 74] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [68, 65, 62, 70, 72, 69, 68] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [65, 67, 70, 68] }
+  },
+  waterLevel: {
+    label: 'مستوى الخزان (%)',
+    color: '#3b82f6',
+    minY: 0, maxY: 100,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [75, 75, 75, 74, 74, 75] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [90, 85, 80, 75, 70, 88, 85] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [95, 88, 82, 75, 92, 85, 80] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [85, 82, 88, 80] }
+  },
+  ph: {
+    label: 'الحموضة (pH)',
+    color: '#22c55e',
+    minY: 4, maxY: 9,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [6.2, 6.2, 6.2, 6.3, 6.2, 6.2] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [6.0, 6.1, 6.3, 6.2, 6.4, 6.2, 6.1] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [6.1, 6.2, 6.0, 6.3, 6.2, 6.1, 6.2] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [6.1, 6.2, 6.2, 6.1] }
+  },
+  ec: {
+    label: 'الملوحة (EC mS/cm)',
+    color: '#8b5cf6',
+    minY: 0, maxY: 4,
+    '1h':  { labels: ['10m', '20m', '30m', '40m', '50m', '60m'], data: [1.58, 1.58, 1.59, 1.58, 1.58, 1.58] },
+    '24h': { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'], data: [1.5, 1.55, 1.62, 1.58, 1.60, 1.57, 1.58] },
+    '7d':  { labels: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'], data: [1.5, 1.6, 1.58, 1.62, 1.55, 1.58, 1.6] },
+    '30d': { labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'], data: [1.55, 1.58, 1.6, 1.57] }
+  }
+};
+
 function initCharts() {
-  initMainWaterChart();
-  initDevicesDoughnutChart();
+  initMainMonitoringChart();
   initGaugeCharts();
 }
 
-function initMainWaterChart() {
-  const canvas = document.getElementById('chart-main-water');
+function initMainMonitoringChart() {
+  const canvas = document.getElementById('chart-main-monitoring');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  const dataset = mockChartData[activeSensor];
+  const timeData = dataset[activeTimeRange];
+
   const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
-  gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+  gradient.addColorStop(0, dataset.color + '66'); 
+  gradient.addColorStop(1, dataset.color + '00');
 
   charts.mainWater = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+      labels: timeData.labels,
       datasets: [{
-        label: 'Water Temp °C',
-        data: [22.1, 22.8, 22.2, 23.4, 22.9, 24.2, 22.6],
-        borderColor: '#0284c7',
+        label: dataset.label,
+        data: timeData.data,
+        borderColor: dataset.color,
         borderWidth: 2.5,
         backgroundColor: gradient,
         fill: true,
         tension: 0.4,
-        pointRadius: 2,
+        pointRadius: 3,
         pointHoverRadius: 6
       }]
     },
@@ -497,39 +560,52 @@ function initMainWaterChart() {
       maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: {
-        y: { min: 20, max: 26, grid: { color: '#f1f5f9' } },
+        y: { min: dataset.minY, max: dataset.maxY, grid: { color: '#f1f5f9' } },
         x: { grid: { display: false } }
       }
     }
   });
 }
 
-function initDevicesDoughnutChart() {
-  const canvas = document.getElementById('chart-devices-status');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  charts.devicesStatus = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Running', 'Idle', 'Off', 'Alert'],
-      datasets: [{
-        data: [5, 1, 2, 1],
-        backgroundColor: ['#22c55e', '#38bdf8', '#94a3b8', '#ef4444'],
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '75%',
-      plugins: {
-        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
-      }
-    }
-  });
+// Change Sensor Event handler
+function changeChartSensor(sensorKey) {
+  activeSensor = sensorKey;
+  updateMainChart();
 }
 
+// Change Time Filter Event handler
+function filterChartTime(rangeKey, btnElement) {
+  document.querySelectorAll('.btn-time').forEach(b => b.classList.remove('active'));
+  btnElement.classList.add('active');
+  activeTimeRange = rangeKey;
+  updateMainChart();
+}
+
+// Update Dynamic Line Chart
+function updateMainChart() {
+  if (!charts.mainWater) return;
+
+  const dataset = mockChartData[activeSensor];
+  const timeData = dataset[activeTimeRange];
+  const ctx = charts.mainWater.ctx;
+
+  const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+  gradient.addColorStop(0, dataset.color + '66');
+  gradient.addColorStop(1, dataset.color + '00');
+
+  charts.mainWater.data.labels = timeData.labels;
+  charts.mainWater.data.datasets[0].label = dataset.label;
+  charts.mainWater.data.datasets[0].data = timeData.data;
+  charts.mainWater.data.datasets[0].borderColor = dataset.color;
+  charts.mainWater.data.datasets[0].backgroundColor = gradient;
+  
+  charts.mainWater.options.scales.y.min = dataset.minY;
+  charts.mainWater.options.scales.y.max = dataset.maxY;
+
+  charts.mainWater.update();
+}
+
+// Gauges Helper Functions
 function createSemiGauge(elementId, value, min, max, color) {
   const canvas = document.getElementById(elementId);
   if (!canvas) return null;
@@ -570,5 +646,6 @@ function updateGaugeChart(gaugeInstance, val, min, max) {
   const currentVal = Math.max(min, Math.min(val, max));
   gaugeInstance.data.datasets[0].data = [currentVal - min, max - currentVal];
   gaugeInstance.update();
-          }
+}
+
         
