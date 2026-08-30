@@ -27,7 +27,6 @@ body {
   direction: rtl;
 }
 
-/* Header Bar */
 .header-bar {
   position: fixed;
   top: 0;
@@ -61,17 +60,9 @@ body {
   gap: 5px;
 }
 
-.connection-tag.online {
-  background-color: #d1fae5;
-  color: #065f46;
-}
+.connection-tag.online { background-color: #d1fae5; color: #065f46; }
+.connection-tag.offline { background-color: #fee2e2; color: #991b1b; }
 
-.connection-tag.offline {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-/* Page Tabs Layout */
 .page-tab {
   display: none;
   padding: 16px;
@@ -79,11 +70,8 @@ body {
   margin: 0 auto;
 }
 
-.page-tab.active {
-  display: block;
-}
+.page-tab.active { display: block; }
 
-/* General Card Design */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--border-color);
@@ -91,15 +79,13 @@ body {
   padding: 14px 16px;
   margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: border-color 0.3s ease;
+  transition: all 0.3s ease;
 }
 
-/* Horizontal Card Structure */
 .gauge-row-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
 }
 
 .gauge-info {
@@ -124,7 +110,12 @@ body {
   color: var(--text-muted);
 }
 
-/* LED Indicator (ضوء التنبيه الأحمر) */
+.gauge-chart-wrapper {
+  width: 70px;
+  height: 50px;
+}
+
+/* الضوء التنبيهي الأحمر */
 .gauge-status-indicator {
   width: 16px;
   height: 16px;
@@ -134,7 +125,7 @@ body {
   transition: all 0.3s ease;
 }
 
-/* Glowing/Blinking Red Status for Threshold Violations */
+/* تأثير الإشعال والإطفاء عند تجاوز الحد */
 .gauge-status-indicator.danger {
   animation: blinkRed 0.8s infinite alternate;
 }
@@ -150,11 +141,10 @@ body {
   }
   100% {
     background-color: #7f1d1d;
-    box-shadow: 0 0 1px transparent;
+    box-shadow: 0 0 0px transparent;
   }
 }
 
-/* Chart Controls Header */
 .chart-controls-header {
   display: flex;
   flex-direction: column;
@@ -171,10 +161,7 @@ body {
   outline: none;
 }
 
-.time-filter-btns {
-  display: flex;
-  gap: 6px;
-}
+.time-filter-btns { display: flex; gap: 6px; }
 
 .btn-time {
   flex: 1;
@@ -201,7 +188,6 @@ body {
   cursor: pointer;
 }
 
-/* Bottom Navigation Bar */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -227,16 +213,9 @@ body {
   width: 25%;
 }
 
-.nav-item i {
-  font-size: 1.2rem;
-}
+.nav-item i { font-size: 1.2rem; }
+.nav-item.active { color: var(--primary-color); font-weight: bold; }
 
-.nav-item.active {
-  color: var(--primary-color);
-  font-weight: bold;
-}
-
-/* Modals */
 .modal {
   display: none;
   position: fixed;
@@ -248,14 +227,8 @@ body {
   padding: 16px;
 }
 
-.modal.active {
-  display: flex;
-}
-
-.modal-content {
-  width: 100%;
-  max-width: 400px;
-}
+.modal.active { display: flex; }
+.modal-content { width: 100%; max-width: 400px; }
 
 .input-field {
   width: 100%;
@@ -263,6 +236,4 @@ body {
   border: 1px solid var(--border-color);
   border-radius: 6px;
   margin-top: 4px;
-  box-sizing: border-box;
-   }
-   
+                   }
