@@ -1,10 +1,16 @@
-// MQTT Configuration tailored for your original telemetry topic
+// HiveMQ Cloud Credentials & Topics Configuration
 const MQTT_CONFIG = {
-  primaryBroker: 'wss://broker.hivemq.com:8884/mqtt',
-  fallbackBroker: 'wss://broker.emqx.io:8084/mqtt',
-  
-  clientId: 'Hydroponic_Web_' + Math.floor(Math.random() * 100000),
-  
+  // استخدام بروتوكول WSS للاتصال الآمن عبر المتصفح بالـ Cloud Cluster
+  host: 'wss://99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud:8884/mqtt',
+  options: {
+    username: 'hydro01',
+    password: 'Atef269269',
+    clientId: 'Hydroponic_Web_' + Math.floor(Math.random() * 100000),
+    keepalive: 60,
+    reconnectPeriod: 3000,
+    connectTimeout: 10000,
+    clean: true
+  },
   topics: {
     telemetry: 'greenhouse/GH001/telemetry',
     commands: 'greenhouse/GH001/commands'
@@ -15,7 +21,7 @@ let mqttClient = null;
 
 // App Startup
 document.addEventListener("DOMContentLoaded", () => {
-  initMQTT(MQTT_CONFIG.primaryBroker);
+  initMQTT();
   initCharts();
 });
 
@@ -46,13 +52,15 @@ function openSubPage(subType) {
         <button class="btn-primary" onclick="closeSubPage()">حفظ وتزامن</button>
       </div>`;
   } else if (subType === 'sub-mqtt') {
-    title.innerText = "إعدادات MQTT والشبكة";
+    title.innerText = "إعدادات HiveMQ Cloud";
     content.innerHTML = `
       <div class="card">
-        <label style="display:block; margin-bottom:5px;">حالة الاتصال الحالية:</label>
-        <button class="btn-primary" style="background:#0284c7; margin-bottom:15px;" onclick="reconnectMQTT()">إعادة الاتصال بالخادم الآن 🔄</button>
-        <label style="display:block;">Telemetry Topic:</label>
-        <input type="text" value="${MQTT_CONFIG.topics.telemetry}" class="input-field" readonly>
+        <label style="display:block; margin-bottom:5px;">حالة الاتصال بالكلود:</label>
+        <button class="btn-primary" style="background:#0284c7; margin-bottom:15px;" onclick="reconnectMQTT()">إعادة الاتصال 🔄</button>
+        <label style="display:block;">Cloud Host:</label>
+        <input type="text" value="99580666d99a4632b4a1d5087e22d494.s1.eu.hivemq.cloud" class="input-field" readonly>
+        <label style="display:block;">User:</label>
+        <input type="text" value="hydro01" class="input-field" readonly>
       </div>`;
   } else {
     title.innerText = "الصفحة الفرعية";
@@ -64,111 +72,132 @@ function closeSubPage() {
   document.getElementById('sub-page-modal').classList.remove('open');
 }
 
-// MQTT Engine Real-Time Communications
-function initMQTT(brokerUrl) {
+// MQTT Connection Engine for HiveMQ Cloud
+function initMQTT() {
   const statusTag = document.getElementById('global-status-tag');
   
   if (mqttClient) {
     try { mqttClient.end(true); } catch(e) {}
   }
 
-  statusTag.className = 'connection-tag offline';
-  statusTag.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال...';
+  if (statusTag) {
+    statusTag.className = 'connection-tag offline';
+    statusTag.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الاتصال بالكلود...';
+  }
 
   try {
-    mqttClient = mqtt.connect(brokerUrl, {
-      clientId: MQTT_CONFIG.clientId,
-      keepalive: 60,
-      reconnectPeriod: 3000,
-      connectTimeout: 5000,
-      clean: true
-    });
+    // Connect to HiveMQ Cloud via WebSocket Secure
+    mqttClient = mqtt.connect(MQTT_CONFIG.host, MQTT_CONFIG.options);
 
     mqttClient.on('connect', () => {
-      console.log(`Connected successfully to MQTT Broker: ${brokerUrl}`);
-      statusTag.className = 'connection-tag online';
-      statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل (GH001)';
+      console.log('Successfully connected to HiveMQ Cloud Cluster!');
+      if (statusTag) {
+        statusTag.className = 'connection-tag online';
+        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> متصل (HiveMQ Cloud)';
+      }
 
-      // Subscribe strictly to greenhouse/GH001/telemetry
+      // Subscribe to telemetry topic
       mqttClient.subscribe(MQTT_CONFIG.topics.telemetry, (err) => {
         if (!err) {
-          console.log(`Subscribed to: ${MQTT_CONFIG.topics.telemetry}`);
+          console.log(`Subscribed to Cloud Topic: ${MQTT_CONFIG.topics.telemetry}`);
+        } else {
+          console.error("Subscription Error:", err);
         }
       });
     });
 
     mqttClient.on('message', (topic, payload) => {
+      console.log("Cloud Payload Received [" + topic + "]:", payload.toString());
       try {
         const data = JSON.parse(payload.toString());
         if (topic === MQTT_CONFIG.topics.telemetry) {
           updateSensorUI(data);
         }
       } catch (e) {
-        console.error("JSON Parsing Error:", e);
+        console.error("JSON Error:", e);
       }
     });
 
     mqttClient.on('error', (err) => {
-      console.error('MQTT Error:', err);
-      if (brokerUrl === MQTT_CONFIG.primaryBroker) {
-        console.warn('Switching to Fallback Broker...');
-        initMQTT(MQTT_CONFIG.fallbackBroker);
-      } else {
+      console.error('HiveMQ Cloud Connection Error:', err);
+      if (statusTag) {
+        statusTag.className = 'connection-tag offline';
+        statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> خطأ اتصال بالكلود';
+      }
+    });
+
+    mqttClient.on('offline', () => {
+      if (statusTag) {
         statusTag.className = 'connection-tag offline';
         statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> غير متصل';
       }
     });
 
-    mqttClient.on('offline', () => {
-      statusTag.className = 'connection-tag offline';
-      statusTag.innerHTML = '<i class="fa-solid fa-circle"></i> غير متصل';
-    });
-
   } catch (e) {
-    console.error('MQTT Connection Exception:', e);
+    console.error('MQTT Exception:', e);
   }
 }
 
 function reconnectMQTT() {
-  initMQTT(MQTT_CONFIG.primaryBroker);
+  initMQTT();
   closeSubPage();
 }
 
-// Dynamic UI Updater mapping your exact JSON telemetry keys
+// Dynamic Safe UI Updater
 function updateSensorUI(data) {
-  // Environmental & Water Measurements
-  if (data.air_temp !== undefined) document.getElementById('dash-air-temp').innerHTML = `${data.air_temp} <small>°C</small>`;
-  if (data.air_hum !== undefined) document.getElementById('dash-air-hum').innerHTML = `${data.air_hum} <small>%</small>`;
-  if (data.water_temp !== undefined) document.getElementById('dash-water-temp').innerHTML = `${data.water_temp} <small>°C</small>`;
-  if (data.tank_level !== undefined) document.getElementById('dash-water-level').innerHTML = `${data.tank_level} <small>%</small>`;
-  
-  // Nutrients Measurements
+  const setHtml = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = val;
+  };
+
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  };
+
+  const setProgress = (selector, val) => {
+    const el = document.querySelector(selector);
+    if (el) el.value = parseFloat(val) || 0;
+  };
+
+  // 1. Environmental & Water Values
+  if (data.air_temp !== undefined) setHtml('dash-air-temp', `${data.air_temp} <small>°C</small>`);
+  if (data.air_hum !== undefined) setHtml('dash-air-hum', `${data.air_hum} <small>%</small>`);
+  if (data.water_temp !== undefined) setHtml('dash-water-temp', `${data.water_temp} <small>°C</small>`);
+  if (data.tank_level !== undefined) setHtml('dash-water-level', `${data.tank_level} <small>%</small>`);
+
+  // 2. Nutrients & Gauges
   if (data.ph !== undefined) {
-    document.getElementById('dash-ph').innerText = data.ph;
-    document.getElementById('gauge-ph-val').innerText = data.ph;
+    setText('dash-ph', data.ph);
+    setText('gauge-ph-val', data.ph);
+    setProgress('#tab-monitoring progress[max="14"]', data.ph);
   }
+  
   if (data.ec !== undefined) {
-    document.getElementById('dash-ec').innerText = data.ec;
-    document.getElementById('gauge-ec-val').innerText = `${data.ec} mS/cm`;
+    setHtml('dash-ec', `${data.ec} <small>mS</small>`);
+    setText('gauge-ec-val', `${data.ec} mS/cm`);
+    setProgress('#tab-monitoring progress[max="5"]', data.ec);
   }
 
-  // Operation Mode
+  // 3. System Mode
   if (data.mode !== undefined) {
-    document.getElementById('dash-mode-val').innerText = data.mode === 'AUTO' ? 'تلقائي' : 'يدوي';
+    setText('dash-mode-val', String(data.mode).toUpperCase() === 'AUTO' ? 'تلقائي' : 'يدوي');
   }
 
-  // Sync Relay Switches with hardware state
+  // 4. Relay Switches Sync
   if (data.pump !== undefined) {
-    const pumpSwitch = document.getElementById('dev-pump1');
-    if (pumpSwitch) pumpSwitch.checked = (data.pump === 'ON');
+    const el = document.getElementById('dev-pump1');
+    if (el) el.checked = (String(data.pump).toUpperCase() === 'ON');
   }
+  
   if (data.fan !== undefined) {
-    const fanSwitch = document.getElementById('dev-fan1');
-    if (fanSwitch) fanSwitch.checked = (data.fan === 'ON');
+    const el = document.getElementById('dev-fan1');
+    if (el) el.checked = (String(data.fan).toUpperCase() === 'ON');
   }
+  
   if (data.pad !== undefined) {
-    const padSwitch = document.getElementById('dev-pad');
-    if (padSwitch) padSwitch.checked = (data.pad === 'ON');
+    const el = document.getElementById('dev-pad');
+    if (el) el.checked = (String(data.pad).toUpperCase() === 'ON');
   }
 }
 
@@ -180,14 +209,17 @@ function toggleDevice(deviceId, state) {
       state: state ? "ON" : "OFF"
     });
     mqttClient.publish(MQTT_CONFIG.topics.commands, payload);
+    console.log("Published Command to Cloud:", payload);
   } else {
-    alert('تعذر إرسال الأمر: التطبيق غير متصل بالسيرفر حالياً.');
+    alert('التطبيق غير متصل بالسيرفر حالياً!');
   }
 }
 
 // Render History Charts
 function initCharts() {
-  const ctx = document.getElementById('chart-temp').getContext('2d');
+  const canvas = document.getElementById('chart-temp');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
   new Chart(ctx, {
     type: 'line',
     data: {
@@ -202,5 +234,5 @@ function initCharts() {
       }]
     }
   });
-}
-  
+      }
+            
