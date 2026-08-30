@@ -107,32 +107,77 @@
       </div>
     </section>
 
-    <!-- PAGE 2: Monitoring & Charts Tab -->
-    <section id="tab-monitoring" class="page-tab">
-      <div class="tab-title">
-        <h3>المراقبة والرسوم البيانية</h3>
-        <p>متابعة القراءات والتحليلات</p>
-      </div>
+<!-- PAGE 2: Monitoring & Charts Tab -->
+<section id="tab-monitoring" class="page-tab">
+  <div class="tab-title">
+    <h3>Live Monitoring</h3>
+    <p>Real-time system overview</p>
+  </div>
 
-      <div class="cards-grid">
-        <div class="card">
-          <h4>مستوى pH الحالية</h4>
-          <div id="gauge-ph-val" class="gauge-value">--</div>
-          <progress value="0" max="14" class="progress-bar"></progress>
+  <!-- Big Line Chart Card -->
+  <div class="card chart-card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h4 style="margin:0;">حرارة الماء (Water Temp °C)</h4>
+      <span style="font-size:0.8rem; background:#f1f5f9; padding:4px 8px; border-radius:6px; color:#64748b;">آخر 24 ساعة</span>
+    </div>
+    <div style="height: 220px; position: relative;">
+      <canvas id="chart-main-water"></canvas>
+    </div>
+  </div>
+
+  <!-- Devices Status Doughnut Chart -->
+  <div class="card" style="margin-top: 16px;">
+    <h4>حالة الأجهزة (Devices Status)</h4>
+    <div style="height: 180px; position: relative; margin-top: 10px;">
+      <canvas id="chart-devices-status"></canvas>
+    </div>
+  </div>
+
+  <!-- Quick View Gauges Grid -->
+  <div style="margin-top: 20px;">
+    <h4 style="margin-bottom: 12px; color: var(--text-dark);">Quick View</h4>
+    <div class="cards-grid">
+      
+      <!-- pH Gauge Card -->
+      <div class="card gauge-card">
+        <span class="card-label">pH Level</span>
+        <div style="height: 110px; position: relative; margin-top: 5px;">
+          <canvas id="gauge-ph"></canvas>
         </div>
+        <div class="ideal-range-tag">Ideal 5.8 - 6.5</div>
+      </div>
 
-        <div class="card">
-          <h4>مستوى EC الحالية</h4>
-          <div id="gauge-ec-val" class="gauge-value">-- mS/cm</div>
-          <progress value="0" max="5" class="progress-bar"></progress>
+      <!-- EC Gauge Card -->
+      <div class="card gauge-card">
+        <span class="card-label">EC (mS/cm)</span>
+        <div style="height: 110px; position: relative; margin-top: 5px;">
+          <canvas id="gauge-ec"></canvas>
         </div>
+        <div class="ideal-range-tag">Ideal 1.2 - 2.0</div>
       </div>
 
-      <div class="card chart-card">
-        <h4>سجل الحرارة</h4>
-        <canvas id="chart-temp"></canvas>
+      <!-- Water Temp Gauge Card -->
+      <div class="card gauge-card">
+        <span class="card-label">Water Temp (°C)</span>
+        <div style="height: 110px; position: relative; margin-top: 5px;">
+          <canvas id="gauge-water-temp"></canvas>
+        </div>
+        <div class="ideal-range-tag">Ideal 18 - 24</div>
       </div>
-    </section>
+
+      <!-- Water Level Gauge Card -->
+      <div class="card gauge-card">
+        <span class="card-label">Water Level (%)</span>
+        <div style="height: 110px; position: relative; margin-top: 5px;">
+          <canvas id="gauge-water-level"></canvas>
+        </div>
+        <div class="ideal-range-tag">Ideal 40 - 80</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
 
     <!-- PAGE 3: Manual Controls Tab (With Auto-Lock Banner) -->
     <section id="tab-controls" class="page-tab">
