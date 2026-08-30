@@ -1,187 +1,105 @@
-/* ==========================================
-   Global Variables & Theme Design
-   ========================================== */
 :root {
-  --primary-color: #0284c7;
+  --primary-color: #10b981;
+  --primary-dark: #059669;
   --bg-color: #f8fafc;
   --card-bg: #ffffff;
   --text-dark: #0f172a;
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --danger-color: #ef4444;
-  --success-color: #22c55e;
+  --nav-height: 65px;
+  --header-height: 60px;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background-color: var(--bg-color);
   color: var(--text-dark);
+  padding-top: var(--header-height);
+  padding-bottom: calc(var(--nav-height) + 15px);
   direction: rtl;
-  padding-bottom: 70px;
 }
 
-/* ==========================================
-   Page & Navigation Header
-   ========================================== */
+/* Header Bar */
 .header-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: var(--card-bg);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 1000;
 }
 
 .brand-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #16a34a;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--primary-dark);
 }
 
 .connection-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .connection-tag.online {
-  background-color: #dcfce7;
-  color: #15803d;
+  background-color: #d1fae5;
+  color: #065f46;
 }
 
 .connection-tag.offline {
   background-color: #fee2e2;
-  color: #b91c1c;
+  color: #991b1b;
 }
 
-/* ==========================================
-   Cards & Layout Components
-   ========================================== */
+/* Page Tabs Layout */
+.page-tab {
+  display: none;
+  padding: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.page-tab.active {
+  display: block;
+}
+
+/* General Card Design */
 .card {
   background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
-  padding: 16px;
-  margin: 12px 16px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-  border: 1px solid var(--border-color);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: border-color 0.3s ease;
 }
 
-.input-field {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  margin-top: 5px;
-  font-size: 0.9rem;
-  outline: none;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: #ffffff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-danger-sm {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  cursor: pointer;
-}
-
-/* ==========================================
-   Dynamic Chart Controls & Time Filters
-   ========================================== */
-.chart-controls-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.chart-select {
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background-color: #f8fafc;
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-dark);
-  outline: none;
-  cursor: pointer;
-}
-
-.time-filter-btns {
-  display: flex;
-  background: #f1f5f9;
-  padding: 2px;
-  border-radius: 8px;
-  gap: 2px;
-}
-
-.btn-time {
-  border: none;
-  background: transparent;
-  padding: 4px 10px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-time.active {
-  background: #ffffff;
-  color: var(--primary-color);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-
-/* ==========================================
-   Gauges Vertical Layout & Rows
-   ========================================== */
-.gauges-vertical-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
+/* Horizontal Card Structure */
 .gauge-row-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  border-right: 4px solid var(--primary-color);
-  margin: 0;
-}
-
-.gauge-row-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .gauge-info {
@@ -192,102 +110,159 @@ body {
 
 .gauge-title {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .gauge-value {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.4rem;
+  font-weight: bold;
   color: var(--text-dark);
 }
 
 .optimal-range-text {
   font-size: 0.75rem;
-  color: #94a3b8;
+  color: var(--text-muted);
 }
 
-.optimal-range-text strong {
-  color: var(--primary-color);
+/* LED Indicator (ضوء التنبيه الأحمر) */
+.gauge-status-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
 }
 
-.gauge-chart-wrapper {
-  width: 90px;
-  height: 60px;
-  position: relative;
+/* Glowing/Blinking Red Status for Threshold Violations */
+.gauge-status-indicator.danger {
+  animation: blinkRed 0.8s infinite alternate;
 }
 
-/* ==========================================
-   Modal Popups & Dialogs
-   ========================================== */
-.modal {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
+.card.danger-border {
+  border-color: var(--danger-color);
 }
 
-.modal.open {
+@keyframes blinkRed {
+  0% {
+    background-color: #ef4444;
+    box-shadow: 0 0 4px #ef4444, 0 0 12px #ef4444;
+  }
+  100% {
+    background-color: #7f1d1d;
+    box-shadow: 0 0 1px transparent;
+  }
+}
+
+/* Chart Controls Header */
+.chart-controls-header {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.modal-content {
+.chart-select {
   width: 100%;
-  max-width: 400px;
-  background: #fff;
-  border-radius: 12px;
-  animation: popIn 0.2s ease-out;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  outline: none;
 }
 
-@keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+.time-filter-btns {
+  display: flex;
+  gap: 6px;
 }
 
-/* ==========================================
-   Bottom Navigation Bar
-   ========================================== */
+.btn-time {
+  flex: 1;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 0;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.btn-time.active {
+  background: var(--primary-color);
+  color: #fff;
+  border-color: var(--primary-color);
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Bottom Navigation Bar */
 .bottom-nav {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: 60px;
-  background: #ffffff;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: var(--nav-height);
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  border-top: 1px solid var(--border-color);
-  z-index: 999;
+  z-index: 1000;
 }
 
 .nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
   color: var(--text-muted);
-  text-decoration: none;
   font-size: 0.75rem;
   cursor: pointer;
-}
-
-.nav-item.active {
-  color: var(--primary-color);
-  font-weight: 600;
+  width: 25%;
 }
 
 .nav-item i {
   font-size: 1.2rem;
-  margin-bottom: 2px;
 }
 
-.page-tab {
+.nav-item.active {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* Modals */
+.modal {
   display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
 }
 
-.page-tab.active {
-  display: block;
-    }
-  
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 400px;
+}
+
+.input-field {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  margin-top: 4px;
+  box-sizing: border-box;
+   }
+   
