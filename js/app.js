@@ -1,4 +1,4 @@
-// Data Structures and Default Ranges
+// Data Configuration and Initial Ranges
 const sensorConfig = {
   ph: { min: 5.5, max: 6.5, label: 'الحموضة (pH Level)', unit: '' },
   ec: { min: 1.2, max: 2.0, label: 'الملوحة (EC mS/cm)', unit: 'mS' },
@@ -8,13 +8,11 @@ const sensorConfig = {
   waterLevel: { min: 40.0, max: 80.0, label: 'مستوى الخزان (Water Level %)', unit: '%' }
 };
 
-// State Variables
 let currentValues = { ph: 6.8, ec: 1.8, waterTemp: 26.5, airTemp: 24.0, airHum: 65.0, waterLevel: 75.0 };
 let currentSystemMode = "AUTO";
 let activeModalSensor = null;
 let mainChart = null;
 
-// Initialize Dashboard
 document.addEventListener("DOMContentLoaded", () => {
   renderOptimalRangesText();
   updateAllSensorUI();
@@ -22,7 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   connectMQTT();
 });
 
-// Switch Page Tabs
 function switchTab(tabId, element) {
   document.querySelectorAll('.page-tab').forEach(tab => tab.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
@@ -31,7 +28,6 @@ function switchTab(tabId, element) {
   element.classList.add('active');
 }
 
-// Render Optimal Ranges Text on UI
 function renderOptimalRangesText() {
   for (const key in sensorConfig) {
     const rangeTxtElem = document.getElementById(`range-txt-${key}`);
@@ -41,19 +37,23 @@ function renderOptimalRangesText() {
   }
 }
 
-// Update Sensor Card Values and Trigger Red Blinking Warning if out of range
+// تحديث القيم وحالة المؤشر الأحمر بالصفحة الرئيسية وصفحة المراقبة
 function updateAllSensorUI() {
   for (const key in currentValues) {
     const val = currentValues[key];
-    const valElem = document.getElementById(`val-gauge-${key}`);
+    
+    // عناصر الصفحة الرئيسية
+    const homeValElem = document.getElementById(`val-home-${key}`);
+    if (homeValElem) homeValElem.innerText = `${val} ${sensorConfig[key].unit}`;
+
+    // عناصر صفحة المراقبة
+    const gaugeValElem = document.getElementById(`val-gauge-${key}`);
+    if (gaugeValElem) gaugeValElem.innerText = `${val} ${sensorConfig[key].unit}`;
+
     const cardElem = document.getElementById(`card-${key}`);
     const indicatorElem = document.getElementById(`indicator-${key}`);
 
-    if (valElem) {
-      valElem.innerText = `${val} ${sensorConfig[key].unit}`;
-    }
-
-    // Check bounds: enable Red Blink if out of limit
+    // فحص التجاوز لإشعال الضوء الأحمر (Blink)
     if (val < sensorConfig[key].min || val > sensorConfig[key].max) {
       if (indicatorElem) indicatorElem.classList.add('danger');
       if (cardElem) cardElem.classList.add('danger-border');
@@ -64,7 +64,6 @@ function updateAllSensorUI() {
   }
 }
 
-// Modal Handlers for Updating Ranges
 function openRangeModal(sensorKey) {
   activeModalSensor = sensorKey;
   document.getElementById('modal-sensor-name').innerText = `تعديل حدود: ${sensorConfig[sensorKey].label}`;
@@ -92,11 +91,10 @@ function confirmSaveRange() {
     updateAllSensorUI();
     closeRangeModal();
   } else {
-    alert("يرجى إدخال قيم صالحة حيث يكون الحد الأدنى أقل من الحد الأقصى.");
+    alert("الرجاء إدخال نطاق صحيح.");
   }
 }
 
-// System Mode Handler
 function promptModeChange(newMode) {
   currentSystemMode = newMode;
   document.getElementById('dash-mode-val').innerText = newMode === "AUTO" ? "تلقائي (Automatic)" : "يدوي (Manual)";
@@ -107,7 +105,6 @@ function promptModeChange(newMode) {
   }
 }
 
-// Setup Monitoring Chart using Chart.js
 function initMonitoringChart() {
   const ctx = document.getElementById('chart-main-monitoring');
   if (!ctx) return;
@@ -128,11 +125,7 @@ function initMonitoringChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { display: false } },
-        y: { grid: { color: '#e2e8f0' } }
-      }
+      plugins: { legend: { display: false } }
     }
   });
 }
@@ -148,7 +141,6 @@ function filterChartTime(filter, btnElement) {
   btnElement.classList.add('active');
 }
 
-// MQTT Connection Logic (Placeholder)
 function connectMQTT() {
   const statusElem = document.getElementById('global-status-tag');
   setTimeout(() => {
@@ -160,14 +152,9 @@ function connectMQTT() {
   }, 1000);
 }
 
-// Notification Request
 function requestNotificationPermission() {
   if ("Notification" in window) {
-    Notification.requestPermission().then(permission => {
-      if (permission === "granted") {
-        alert("تم تفعيل الإشعارات بنجاح!");
-      }
-    });
+    Notification.requestPermission();
   }
   }
-                                                             
+    
