@@ -1,170 +1,164 @@
-// Sensor Configurations with Tolerances for dynamic status calculation
-const sensorConfig = {
-  airTemp: { min: 18.0, max: 30.0, label: 'Air Temp', unit: '°C' },
-  airHum: { min: 50.0, max: 75.0, label: 'Humidity', unit: '%' },
-  waterTemp: { min: 18.0, max: 24.0, label: 'Water Temp', unit: '°C' },
-  waterLevel: { min: 40.0, max: 80.0, label: 'Water Level', unit: '%' },
-  ph: { min: 5.5, max: 6.5, label: 'pH Level', unit: '' },
-  ec: { min: 1.2, max: 2.0, label: 'EC Level', unit: 'mS/cm' }
-};
-
-// Current Values (Change values here to test alerts and text status)
-let currentValues = { 
-  airTemp: 27.8, 
-  airHum: 88.0,   // تجاوز عالي جداً (مثال للتجربة)
-  waterTemp: 23.4, 
-  waterLevel: 75.0, 
-  ph: 4.8,       // ضعيف جداً (مثال للتجربة)
-  ec: 1.58 
-};
-
-// Historical Data for Mini Sparklines
-const sparklineData = {
-  airTemp: [26.1, 26.5, 27.0, 27.2, 27.5, 27.8],
-  airHum: [60, 65, 70, 78, 82, 88],
-  waterTemp: [22.0, 22.5, 22.8, 23.1, 23.2, 23.4],
-  waterLevel: [80, 79, 78, 77, 76, 75],
-  ph: [6.2, 6.0, 5.8, 5.5, 5.0, 4.8],
-  ec: [1.50, 1.52, 1.55, 1.56, 1.57, 1.58]
-};
-
-let miniCharts = {};
-let activeModalSensor = null;
-
 document.addEventListener("DOMContentLoaded", () => {
-  initMiniCharts();
-  updateAllSensorUI();
-  setupClickEvents();
+  initGauges();
+  initHistoryCharts();
 });
 
-function switchTab(tabId, element) {
+// Switch Tabs Logic
+function switchTab(tabId, navElement) {
   document.querySelectorAll('.page-tab').forEach(tab => tab.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
   document.getElementById(tabId).classList.add('active');
-  element.classList.add('active');
+  navElement.classList.add('active');
 }
 
-// Calculate Text Status: (عادي، عالي، عالي جدا، ضعيف، ضعيف جدا)
-function getStatusTextAndClass(val, min, max) {
-  const range = max - min;
-  
-  if (val >= min && val <= max) {
-    return { text: "عادي (مثالي)", class: "normal" };
-  } else if (val > max) {
-    if (val > max + (range * 0.3)) {
-      return { text: "عالي جداً ⚠️", class: "warning-high" };
-    }
-    return { text: "عالي ⚠️", class: "warning-high" };
+// Toggle Submenu Accordion
+function toggleMenu(headerElement) {
+  const menuItem = headerElement.parentElement;
+  menuItem.classList.toggle('active');
+
+  const icon = headerElement.querySelector('.arrow-icon');
+  if (menuItem.classList.contains('active')) {
+    icon.className = 'fa-solid fa-chevron-down arrow-icon';
   } else {
-    if (val < min - (range * 0.3)) {
-      return { text: "ضعيف جداً ⚠️", class: "warning-low" };
-    }
-    return { text: "ضعيف ⚠️", class: "warning-low" };
+    icon.className = 'fa-solid fa-chevron-left arrow-icon';
   }
 }
 
-// Update UI, Text Status, and Blinking Alerts
-function updateAllSensorUI() {
-  for (const key in currentValues) {
-    const val = currentValues[key];
-    const cfg = sensorConfig[key];
-
-    // 1. Update Numeric Value
-    const valElem = document.getElementById(`val-home-${key}`);
-    if (valElem) valElem.innerText = val;
-
-    // 2. Compute Status Text
-    const statusObj = getStatusTextAndClass(val, cfg.min, cfg.max);
-    const statusTxtElem = document.getElementById(`status-txt-${key}`);
-    if (statusTxtElem) {
-      statusTxtElem.innerText = statusObj.text;
-    }
-
-    // 3. Handle Alert Blinking
-    const cardElem = document.getElementById(`card-${key}`);
-    if (cardElem) {
-      cardElem.classList.remove('blink-alert', 'warning-low', 'warning-high');
-      
-      if (statusObj.class !== "normal") {
-        cardElem.classList.add('blink-alert', statusObj.class);
-      }
-    }
-  }
+// Initialize Quick Semi-Circle Gauges for Monitoring Tab
+function initGauges() {
+  createGauge('gauge-ph', 6.1, 14, '#22c55e');
+  createGauge('gauge-ec', 1.8, 5, '#22c55e');
+  createGauge('gauge-watertemp', 21, 40, '#f97316');
+  createGauge('gauge-waterlevel', 80, 100, '#0284c7');
 }
 
-// Render Mini Sparkline Charts inside Cards
-function initMiniCharts() {
-  for (const key in sparklineData) {
-    const ctx = document.getElementById(`spark-${key}`);
-    if (!ctx) continue;
+function createGauge(canvasId, value, maxVal, color) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
 
-    const isDanger = currentValues[key] < sensorConfig[key].min || currentValues[key] > sensorConfig[key].max;
-    const strokeColor = isDanger ? '#ef4444' : '#0284c7';
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [value, maxVal - value],
+        backgroundColor: [color, '#e2e8f0'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      rotation: -90,
+      circumference: 180,
+      cutout: '75%',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { tooltip: { enabled: false }, legend: { display: false } }
+    }
+  });
+}
 
-    miniCharts[key] = new Chart(ctx, {
+// Initialize History Tab Charts
+function initHistoryCharts() {
+  // Chart 1: Air Temp & Humidity
+  const ctxEnv = document.getElementById('chart-env');
+  if (ctxEnv) {
+    new Chart(ctxEnv, {
       type: 'line',
       data: {
-        labels: ['', '', '', '', '', ''],
-        datasets: [{
-          data: sparklineData[key],
-          borderColor: strokeColor,
-          borderWidth: 2,
-          pointRadius: 0,
-          fill: false,
-          tension: 0.4
-        }]
+        labels: ['10:00', '12:00', '13:00', '13:00', '15:00', '15:00'],
+        datasets: [
+          {
+            label: 'Air Temp',
+            data: [27, 26, 28, 27, 28, 29],
+            borderColor: '#0284c7',
+            tension: 0.4,
+            pointRadius: 2
+          },
+          {
+            label: 'Humidity',
+            data: [40, 42, 38, 39, 41, 40],
+            borderColor: '#16a34a',
+            tension: 0.4,
+            pointRadius: 2
+          }
+        ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-        scales: {
-          x: { display: false },
-          y: { display: false }
-        }
-      }
+      options: chartOptions()
+    });
+  }
+
+  // Chart 2: Water Temp & Level
+  const ctxWater = document.getElementById('chart-water');
+  if (ctxWater) {
+    new Chart(ctxWater, {
+      type: 'line',
+      data: {
+        labels: ['10:00', '12:00', '13:00', '13:00', '15:00', '15:00'],
+        datasets: [
+          {
+            label: 'Water Temp',
+            data: [21.5, 21.5, 21.0, 21.2, 21.5, 22.0],
+            borderColor: '#ea580c',
+            tension: 0.4,
+            pointRadius: 2
+          },
+          {
+            label: 'Level',
+            data: [50, 55, 60, 62, 70, 80],
+            borderColor: '#ca8a04',
+            tension: 0.4,
+            pointRadius: 2
+          }
+        ]
+      },
+      options: chartOptions()
+    });
+  }
+
+  // Chart 3: pH & EC
+  const ctxNutrients = document.getElementById('chart-nutrients');
+  if (ctxNutrients) {
+    new Chart(ctxNutrients, {
+      type: 'line',
+      data: {
+        labels: ['10:00', '12:00', '12:00', '12:00', '13:00', '15:00'],
+        datasets: [
+          {
+            label: 'pH',
+            data: [7.5, 7.6, 7.5, 7.5, 7.6, 7.5],
+            borderColor: '#9333ea',
+            tension: 0.4,
+            pointRadius: 2
+          },
+          {
+            label: 'EC',
+            data: [6.5, 6.2, 6.0, 5.8, 6.0, 6.1],
+            borderColor: '#0891b2',
+            tension: 0.4,
+            pointRadius: 2
+          }
+        ]
+      },
+      options: chartOptions()
     });
   }
 }
 
-// Allow Modals on Card Click
-function setupClickEvents() {
-  for (const key in sensorConfig) {
-    const cardElem = document.getElementById(`card-${key}`);
-    if (cardElem) {
-      cardElem.addEventListener('click', () => openRangeModal(key));
-    }
-  }
-}
-
-function openRangeModal(sensorKey) {
-  activeModalSensor = sensorKey;
-  document.getElementById('modal-sensor-name').innerText = `تعديل حدود: ${sensorConfig[sensorKey].label}`;
-  document.getElementById('input-range-min').value = sensorConfig[sensorKey].min;
-  document.getElementById('input-range-max').value = sensorConfig[sensorKey].max;
-  document.getElementById('range-edit-modal').classList.add('active');
-}
-
-function closeRangeModal() {
-  document.getElementById('range-edit-modal').classList.remove('active');
-  activeModalSensor = null;
-}
-
-function confirmSaveRange() {
-  if (!activeModalSensor) return;
-  const newMin = parseFloat(document.getElementById('input-range-min').value);
-  const newMax = parseFloat(document.getElementById('input-range-max').value);
-
-  if (!isNaN(newMin) && !isNaN(newMax) && newMin < newMax) {
-    sensorConfig[activeModalSensor].min = newMin;
-    sensorConfig[activeModalSensor].max = newMax;
-    updateAllSensorUI();
-    closeRangeModal();
-  } else {
-    alert("يرجى أدخال قيمة صالحة للحد الأدنى والأقصى.");
-  }
-}
-
-function requestNotificationPermission() {
-  if ("Notification" in window) Notification.requestPermission();
+function chartOptions() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: { boxWidth: 8, font: { size: 9 } }
       }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 8 } } },
+      y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 8 } } }
+    }
+  };
+    }
+            
