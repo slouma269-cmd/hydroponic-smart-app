@@ -3,221 +3,605 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hydroponic Smart System</title>
+  <title>تطبيق المزارع المائية | HYDROPONIC APP</title>
   
+  <!-- FontAwesome Icons & Chart.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-  <!-- Header Bar -->
-  <header class="header-bar">
-    <div class="header-right">
-      <button class="menu-btn"><i class="fa-solid fa-bars"></i></button>
-      <div class="brand-title">
-        <h2>Hydroponic</h2>
-        <span>Smart System</span>
-      </div>
-    </div>
-    <div class="header-left">
-      <button class="bell-btn" onclick="requestNotificationPermission()">
-        <i class="fa-regular fa-bell"></i>
-        <span class="bell-dot"></span>
-      </button>
-    </div>
-  </header>
-
-  <!-- TAB 1: الصفحة الرئيسية (مستوحاة من الصورة) -->
-  <main id="tab-dashboard" class="page-tab active">
-    
-    <!-- Container Card for Live Status -->
-    <div class="live-status-container">
-      <div class="live-status-header">
-        <h3>Live Status</h3>
-        <div id="global-status-tag" class="status-badge online">
-          <i class="fa-solid fa-circle"></i> AUTO Mode
-        </div>
-      </div>
-
-      <!-- Grid 2 Columns x 3 Rows -->
-      <div class="dashboard-grid">
-        
-        <!-- Air Temp Card -->
-        <div class="sensor-card" id="card-airTemp">
-          <div class="sensor-card-top">
-            <span class="sensor-name">Air Temp</span>
-            <i class="fa-solid fa-temperature-half sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-airTemp">--</span>
-            <span class="sensor-unit">°C</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-airTemp">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-airTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Humidity Card -->
-        <div class="sensor-card" id="card-airHum">
-          <div class="sensor-card-top">
-            <span class="sensor-name">Humidity</span>
-            <i class="fa-solid fa-droplet sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-airHum">--</span>
-            <span class="sensor-unit">%</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-airHum">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-airHum"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Temp Card -->
-        <div class="sensor-card" id="card-waterTemp">
-          <div class="sensor-card-top">
-            <span class="sensor-name">Water Temp</span>
-            <i class="fa-solid fa-flask sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-waterTemp">--</span>
-            <span class="sensor-unit">°C</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-waterTemp">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-waterTemp"></canvas>
-          </div>
-        </div>
-
-        <!-- Water Level Card -->
-        <div class="sensor-card" id="card-waterLevel">
-          <div class="sensor-card-top">
-            <span class="sensor-name">Water Level</span>
-            <i class="fa-solid fa-water sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-waterLevel">--</span>
-            <span class="sensor-unit">%</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-waterLevel">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-waterLevel"></canvas>
-          </div>
-        </div>
-
-        <!-- pH Level Card -->
-        <div class="sensor-card" id="card-ph">
-          <div class="sensor-card-top">
-            <span class="sensor-name">pH Level</span>
-            <i class="fa-solid fa-seedling sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-ph">--</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-ph">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-ph"></canvas>
-          </div>
-        </div>
-
-        <!-- EC Level Card -->
-        <div class="sensor-card" id="card-ec">
-          <div class="sensor-card-top">
-            <span class="sensor-name">EC Level</span>
-            <i class="fa-solid fa-bolt sensor-icon"></i>
-          </div>
-          <div class="sensor-value-group">
-            <span class="sensor-value" id="val-home-ec">--</span>
-            <span class="sensor-unit">mS/cm</span>
-          </div>
-          <div class="sensor-status-text" id="status-txt-ec">جاري التحميل...</div>
-          <div class="mini-chart-container">
-            <canvas id="spark-ec"></canvas>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </main>
-
-  <!-- TAB 2: صفحة المراقبة -->
-  <main id="tab-monitoring" class="page-tab">
-    <div class="card">
-      <div class="chart-controls-header">
-        <select id="sensor-select" class="chart-select" onchange="changeChartSensor(this.value)">
-          <option value="waterTemp">حرارة الماء (°C)</option>
-          <option value="airTemp">حرارة الهواء (°C)</option>
-          <option value="airHum">رطوبة الهواء (%)</option>
-          <option value="waterLevel">مستوى الخزان (%)</option>
-          <option value="ph">الحموضة (pH)</option>
-          <option value="ec">الملوحة (EC)</option>
-        </select>
-      </div>
-      <div style="position: relative; height: 220px; width: 100%;">
-        <canvas id="chart-main-monitoring"></canvas>
-      </div>
-    </div>
-  </main>
-
-  <!-- TAB 3: التحكم -->
-  <main id="tab-controls" class="page-tab">
-    <div class="card">
-      <h4>المفاتيح والمشغلات</h4>
-    </div>
-  </main>
-
-  <!-- TAB 4: القائمة -->
-  <main id="tab-menu" class="page-tab">
-    <div class="card">
-      <h4>السجلات والإعدادات</h4>
-    </div>
-  </main>
-
-  <!-- Modal: تعديل الحدود -->
-  <div id="range-edit-modal" class="modal">
-    <div class="modal-content card">
-      <h3 id="modal-sensor-name" style="margin-top:0;">تعديل الحدود المثالية</h3>
-      <div style="display:flex; gap:10px; margin: 15px 0;">
-        <div style="flex:1;">
-          <label style="font-size:0.8rem;">الحد الأدنى:</label>
-          <input type="number" id="input-range-min" class="input-field" step="0.1">
-        </div>
-        <div style="flex:1;">
-          <label style="font-size:0.8rem;">الحد الأقصى:</label>
-          <input type="number" id="input-range-max" class="input-field" step="0.1">
-        </div>
-      </div>
-      <div style="display:flex; justify-content:flex-end; gap:8px;">
-        <button class="btn-time" onclick="closeRangeModal()">إلغاء</button>
-        <button class="btn-primary" style="padding:6px 16px;" onclick="confirmSaveRange()">حفظ</button>
-      </div>
+  <!-- Top Mobile Bar Status -->
+  <div class="status-bar">
+    <span>9:41</span>
+    <div class="status-icons">
+      <i class="fa-solid fa-signal"></i>
+      <i class="fa-solid fa-wifi"></i>
+      <i class="fa-solid fa-battery-full"></i>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
-  <nav class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('tab-dashboard', this)">
-      <i class="fa-solid fa-house"></i>
-      <span>الرئيسية</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-monitoring', this)">
-      <i class="fa-solid fa-chart-line"></i>
-      <span>المراقبة</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-controls', this)">
-      <i class="fa-solid fa-sliders"></i>
-      <span>التحكم</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tab-menu', this)">
-      <i class="fa-solid fa-bars"></i>
-      <span>القائمة</span>
-    </div>
-  </nav>
+  <!-- Main App Container -->
+  <div class="app-container">
 
+    <!-- ================= 1. DASHBOARD ================= -->
+    <main id="tab-dashboard" class="page-tab active">
+      <header class="page-header">
+        <h2>تطبيق المزارع المائية</h2>
+      </header>
+
+      <div class="page-content">
+        <!-- حالة النظام -->
+        <section class="card">
+          <h4 class="card-title-center">حالة النظام</h4>
+          <div class="system-status-grid">
+            <div class="status-box green">
+              <i class="fa-solid fa-circle-check"></i>
+              <span>متصل</span>
+            </div>
+            <div class="status-box">
+              <span class="status-title">تلقائي</span>
+              <span class="status-sub">AUTO</span>
+            </div>
+            <div class="status-box">
+              <i class="fa-solid fa-wifi"></i>
+              <span class="status-sub">Wi-Fi</span>
+            </div>
+            <div class="status-box">
+              <i class="fa-solid fa-network-wired"></i>
+              <span class="status-sub">MQTT</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- البيئة -->
+        <section class="card">
+          <div class="card-header-row">
+            <i class="fa-solid fa-temperature-three-quarters icon-green"></i>
+            <h4>البيئة</h4>
+          </div>
+          <div class="data-two-cols">
+            <div>
+              <span class="label">رطوبة الهواء</span>
+              <div class="val">Humidity: 65%</div>
+            </div>
+            <div>
+              <span class="label">حرارة الهواء</span>
+              <div class="val">Air Temp: 24.5°C</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- الخزان -->
+        <section class="card">
+          <div class="card-header-row">
+            <i class="fa-solid fa-droplet icon-green"></i>
+            <h4>الخزان</h4>
+          </div>
+          <div class="data-two-cols">
+            <div>
+              <span class="label">حرارة الماء</span>
+              <div class="val">Water Temp: 21°C</div>
+            </div>
+            <div>
+              <span class="label">حرارة الماء</span>
+              <div class="val">Level: 80%</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- المحلول -->
+        <section class="card">
+          <div class="card-header-row">
+            <i class="fa-solid fa-flask icon-green"></i>
+            <h4>المحلول</h4>
+          </div>
+          <div class="data-two-cols">
+            <div>
+              <span class="label">pH</span>
+              <div class="val">6.1</div>
+            </div>
+            <div>
+              <span class="label">EC</span>
+              <div class="val">1.8 ms/cm</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- الأجهزة -->
+        <section class="card">
+          <h4 class="card-title-center">الأجهزة</h4>
+          <div class="devices-circles">
+            <div class="dev-circle active">P1</div>
+            <div class="dev-circle active">P2</div>
+            <div class="dev-circle active">P3</div>
+            <div class="dev-circle active">P4</div>
+            <div class="dev-circle active">F1</div>
+            <div class="dev-circle active">F2</div>
+          </div>
+        </section>
+
+        <!-- التنبيهات -->
+        <section class="card">
+          <h4 class="card-title-center">التنبيهات</h4>
+          <div class="alerts-row">
+            <span>Quick summary</span>
+            <span class="status-ok">No issues</span>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ================= 2. DEVICES ================= -->
+    <main id="tab-devices" class="page-tab">
+      <header class="page-header header-with-icon">
+        <i class="fa-solid fa-gear"></i>
+        <h2>DEVICES | الأجهزة</h2>
+      </header>
+
+      <div class="page-content">
+        <h3 class="section-title">مضخات</h3>
+
+        <!-- Pump 1 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-faucet-drip device-icon"></i>
+            <div>
+              <h4>Pump 1</h4>
+              <span>Irrigation</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode">Auto</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pump 2 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-faucet-drip device-icon"></i>
+            <div>
+              <h4>Pump 2</h4>
+              <span>Venturi</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode manual">Manual</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pump 3 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-faucet-drip device-icon"></i>
+            <div>
+              <h4>Pump 3</h4>
+              <span>Tank Fill</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status off">OFF</span>
+            <span class="badge-mode">Auto</span>
+            <label class="switch">
+              <input type="checkbox">
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pump 4 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-faucet-drip device-icon"></i>
+            <div>
+              <h4>Pump 4</h4>
+              <span>Pad Cooling</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode">Auto</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <h3 class="section-title">مراوح</h3>
+
+        <!-- Fan 1 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-fan device-icon"></i>
+            <div>
+              <h4>Fan 1</h4>
+              <span>Fan 1</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode">Auto</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Fan 2 -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-fan device-icon"></i>
+            <div>
+              <h4>Fan 2</h4>
+              <span>Fan 2</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode manual">Manual</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Pad Cooling -->
+        <div class="device-item-card">
+          <div class="device-info">
+            <i class="fa-solid fa-snowflake device-icon"></i>
+            <div>
+              <h4>Pad Cooling</h4>
+              <span>ON</span>
+            </div>
+          </div>
+          <div class="device-controls">
+            <span class="badge-status">ON</span>
+            <span class="badge-mode">Auto</span>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= 3. LIVE MONITORING ================= -->
+    <main id="tab-monitoring" class="page-tab">
+      <header class="page-header">
+        <h2>مراقبة حية | الحية</h2>
+      </header>
+
+      <div class="page-content">
+        <!-- Horizontal Category Pills -->
+        <div class="category-pills">
+          <div class="pill-item">
+            <i class="fa-solid fa-temperature-three-quarters"></i>
+            <span>Environment</span>
+          </div>
+          <div class="pill-item">
+            <i class="fa-solid fa-glass-water"></i>
+            <span>Water Temp</span>
+          </div>
+          <div class="pill-item">
+            <i class="fa-solid fa-vial"></i>
+            <span>Nutrients</span>
+          </div>
+        </div>
+
+        <!-- Quick Gauges 2x2 Grid -->
+        <div class="gauges-grid">
+          <!-- pH Gauge -->
+          <div class="gauge-card">
+            <span class="gauge-title">pH</span>
+            <div class="gauge-body">
+              <canvas id="gauge-ph"></canvas>
+              <div class="gauge-val-overlay">6.1</div>
+            </div>
+            <span class="gauge-status-tag">Normal</span>
+          </div>
+
+          <!-- EC Gauge -->
+          <div class="gauge-card">
+            <span class="gauge-title">EC</span>
+            <div class="gauge-body">
+              <canvas id="gauge-ec"></canvas>
+              <div class="gauge-val-overlay">1.8 <small>ms/cm</small></div>
+            </div>
+            <span class="gauge-status-tag">Normal</span>
+          </div>
+
+          <!-- Water Temp Gauge -->
+          <div class="gauge-card">
+            <span class="gauge-title">حرارة الماء</span>
+            <div class="gauge-body">
+              <canvas id="gauge-watertemp"></canvas>
+              <div class="gauge-val-overlay">21°C</div>
+            </div>
+          </div>
+
+          <!-- Water Level Gauge -->
+          <div class="gauge-card">
+            <span class="gauge-title">مستوى الماء</span>
+            <div class="gauge-body">
+              <canvas id="gauge-waterlevel"></canvas>
+              <div class="gauge-val-overlay">80%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional System & Device Status -->
+        <div class="card status-summary-card">
+          <div class="status-row">
+            <div>
+              <strong>System Status</strong>
+              <p>System Status</p>
+            </div>
+            <div class="left-val">
+              <span class="green-txt">مكتمل</span>
+              <p>Normal</p>
+            </div>
+          </div>
+          <hr class="divider">
+          <div class="status-row">
+            <div>
+              <strong>Device Status</strong>
+              <p>Device Status</p>
+            </div>
+            <div class="left-val">
+              <span class="green-txt">مراقبة</span>
+              <p>80%</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= 4. HISTORY ================= -->
+    <main id="tab-history" class="page-tab">
+      <header class="page-header">
+        <h2>السجل | HISTORY</h2>
+      </header>
+
+      <div class="page-content">
+        <!-- Time Filter Horizontal Bar -->
+        <div class="time-filter-scroll">
+          <button class="time-btn active">1ساعة</button>
+          <button class="time-btn">7أيام</button>
+          <button class="time-btn">7أيام</button>
+          <button class="time-btn">24ساعة</button>
+          <button class="time-btn">30يوم</button>
+          <button class="time-btn">تخصيص</button>
+        </div>
+
+        <!-- Chart 1: البيئة والماء -->
+        <div class="card chart-card">
+          <h4 class="chart-card-title">البيئة والماء</h4>
+          <div class="chart-wrapper">
+            <canvas id="chart-env"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Water Temp & Level -->
+        <div class="card chart-card">
+          <div class="chart-wrapper">
+            <canvas id="chart-water"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 3: المحلول (pH & EC) -->
+        <div class="card chart-card">
+          <h4 class="chart-card-title">المحلول</h4>
+          <div class="chart-wrapper">
+            <canvas id="chart-nutrients"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================= 5. MENU ================= -->
+    <main id="tab-menu" class="page-tab">
+      <header class="page-header header-between">
+        <h2>القائمة</h2>
+        <i class="fa-solid fa-bars"></i>
+      </header>
+
+      <div class="page-content">
+        <ul class="accordion-menu">
+          
+          <!-- Nutrients -->
+          <li class="menu-item has-submenu active">
+            <div class="menu-header" onclick="toggleMenu(this)">
+              <div class="menu-title">
+                <i class="fa-solid fa-vial"></i>
+                <span>المحلول</span>
+              </div>
+              <i class="fa-solid fa-chevron-down arrow-icon"></i>
+            </div>
+            <div class="submenu">
+              <div class="submenu-item"><span>Target pH</span> <span class="val-tag">6.0</span></div>
+              <div class="submenu-item highlight"><span>مرحلة النمو</span> <span class="val-tag green">Germination stage</span></div>
+              <div class="submenu-item"><span>الجدول الزمني</span></div>
+              <div class="submenu-item"><span>Solution A / B</span></div>
+              <div class="submenu-item"><span>Mixing & Dosing</span></div>
+            </div>
+          </li>
+
+          <!-- Growth Stage -->
+          <li class="menu-item has-submenu">
+            <div class="menu-header" onclick="toggleMenu(this)">
+              <div class="menu-title">
+                <i class="fa-solid fa-seedling"></i>
+                <span>مرحلة النمو</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+            <div class="submenu">
+              <div class="submenu-item"><span>Germination</span></div>
+              <div class="submenu-item"><span>Seedling</span></div>
+              <div class="submenu-item"><span>Vegetative</span></div>
+              <div class="submenu-item"><span>Pre-Harvest & Harvest</span></div>
+            </div>
+          </li>
+
+          <!-- Schedule -->
+          <li class="menu-item has-submenu">
+            <div class="menu-header" onclick="toggleMenu(this)">
+              <div class="menu-title">
+                <i class="fa-regular fa-clock"></i>
+                <span>الجدول الزمني</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+            <div class="submenu">
+              <div class="submenu-item"><span>Pumps Schedule</span></div>
+              <div class="submenu-item"><span>Fans Schedule</span></div>
+            </div>
+          </li>
+
+          <!-- Sensors -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-microchip"></i>
+                <span>المستشعرات</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Calibration -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-wrench"></i>
+                <span>المعايرة</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Alerts -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-regular fa-bell"></i>
+                <span>التنبيهات</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Reports -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-regular fa-file-lines"></i>
+                <span>التقارير</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Network / MQTT -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-wifi"></i>
+                <span>الشبكة</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Settings -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-sliders"></i>
+                <span>الإعدادات</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Backup / Restore -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>نسخة احتياطية</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- About -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>حول</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+          <!-- Logout -->
+          <li class="menu-item">
+            <div class="menu-header">
+              <div class="menu-title">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>تسجيل الخروج</span>
+              </div>
+              <i class="fa-solid fa-chevron-left arrow-icon"></i>
+            </div>
+          </li>
+
+        </ul>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" onclick="switchTab('tab-dashboard', this)">
+        <i class="fa-solid fa-house"></i>
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-devices', this)">
+        <i class="fa-solid fa-calendar-days"></i>
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-monitoring', this)">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-history', this)">
+        <i class="fa-regular fa-bell"></i>
+      </div>
+      <div class="nav-item" onclick="switchTab('tab-menu', this)">
+        <i class="fa-regular fa-user"></i>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- Custom JavaScript -->
   <script src="js/app.js"></script>
 </body>
-</html>
+                </html>
+
+
